@@ -137,7 +137,7 @@ export function PageHeader({ title, subtitle, actions }: { title: string; subtit
 
 export function Panel({ title, actions, children, className, bodyClass }: { title?: ReactNode; actions?: ReactNode; children: ReactNode; className?: string; bodyClass?: string }) {
   return (
-    <section className={cx('rounded-lg border border-gray-200 bg-white', className)}>
+    <section className={cx('min-w-0 rounded-lg border border-gray-200 bg-white', className)}>
       {(title || actions) && (
         <header className="flex items-center justify-between gap-2 border-b border-gray-200 px-4 py-2.5">
           <h2 className="text-sm font-semibold text-gray-900">{title}</h2>

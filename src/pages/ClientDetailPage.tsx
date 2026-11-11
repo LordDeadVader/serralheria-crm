@@ -58,7 +58,7 @@ export function ClientDetailPage() {
             ))}
           </dl>
         </Panel>
-        <div className="space-y-4 lg:col-span-2">
+        <div className="min-w-0 space-y-4 lg:col-span-2">
           <Panel>
             <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
               <Stat label="Orçamentos" value={c.quotes.length} />

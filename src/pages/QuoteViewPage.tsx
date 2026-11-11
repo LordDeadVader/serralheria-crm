@@ -228,7 +228,7 @@ function View({ quote, viewingVersion, setVersion }: { quote: QuoteDetail; viewi
           </Panel>
         </div>
 
-        <aside className="space-y-4">
+        <aside className="min-w-0 space-y-4">
           <Panel title="Status">
             <Select value={quote.status} onChange={(e) => changeStatus(e.target.value as QuoteStatus)} aria-label="Alterar status" disabled={isOld}>
               {QUOTE_STATUSES.map((s) => (

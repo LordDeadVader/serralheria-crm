@@ -17,7 +17,7 @@ export function ReportsPage() {
     <>
       <PageHeader title="Relatórios" subtitle="Desempenho comercial mensal (últimos 12 meses com movimento)." />
       <div className="grid gap-4 lg:grid-cols-3">
-        <div className="lg:col-span-2">
+        <div className="min-w-0 lg:col-span-2">
           <TableWrap>
             {monthly.length === 0 ? (
               <Empty title="Sem orçamentos para gerar relatórios" />

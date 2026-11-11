@@ -99,7 +99,7 @@ export function DashboardPage() {
             </div>
           )}
         </Panel>
-        <div className="space-y-4">
+        <div className="min-w-0 space-y-4">
           <Panel title="Retornos (próximos 7 dias)" bodyClass="p-0">
             {followups.length === 0 ? (
               <p className="px-4 py-6 text-center text-sm text-gray-500">Nenhum retorno agendado.</p>
