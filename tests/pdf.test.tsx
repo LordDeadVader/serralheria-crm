@@ -4,6 +4,7 @@ import { renderToBuffer } from '@react-pdf/renderer';
 import { calculateDocument } from '../src/calculations/quote';
 import { allocateClientLines } from '../src/pdf/allocate';
 import { QuotePdf } from '../src/pdf/QuotePdf';
+import { pdfPageCount } from '../src/pdf/generate';
 import { defaultCompanySettings } from '../src/schemas/settings';
 import type { QuoteDocument } from '../src/schemas/quote';
 import type { Client, Company } from '../src/types/domain';
@@ -86,4 +87,27 @@ describe('PDF da proposta', () => {
       if (process.env.PDF_OUT) writeFileSync(`${process.env.PDF_OUT}/proposta-${showItemized ? 'itens' : 'global'}.pdf`, buf);
     }
   }, 30_000);
+
+  it('proposta típica cabe em uma folha A4; proposta longa usa o modo compacto', async () => {
+    for (const showItemized of [true, false]) {
+      const d = { ...doc, commercial: { ...doc.commercial, showItemized } };
+      const buf = await renderToBuffer(<QuotePdf company={company} client={client} code="ORC-2026-0002" version={2} issuedAt="2026-11-11T12:00:00Z" doc={d} calc={calc} />);
+      if (process.env.PDF_OUT) writeFileSync(`${process.env.PDF_OUT}/uma-folha-${showItemized ? 'itens' : 'global'}.pdf`, buf);
+      expect(pdfPageCount(buf)).toBe(1);
+    }
+    // 12 itens + textos longos: não cabe no normal, cabe no compacto.
+    const many = Array.from({ length: 12 }, (_, i) => ({ key: `m${i}`, materialId: null, code: '', name: `Material ${i + 1} com descrição um pouco mais longa`, unit: 'un' as const, qty: 2, unitCost: 50, wastePct: 0 }));
+    const long = {
+      ...doc,
+      materials: many,
+      project: { ...doc.project, specifications: ['Quadro em metalon 40x40, travessas em 30x30, chapa 18.', 'Fixação com chumbadores.', 'Pintura eletrostática.', 'Instalação inclusa.'].join(String.fromCharCode(10)) },
+      commercial: { ...doc.commercial, notes: 'Valores para pagamento via PIX. Frete incluso para a região metropolitana. Medidas sujeitas a conferência no local.' },
+    };
+    const lcalc = calculateDocument(long);
+    const normal = await renderToBuffer(<QuotePdf company={company} client={client} code="ORC-2026-0003" version={1} issuedAt="2026-11-11T12:00:00Z" doc={long} calc={lcalc} />);
+    const compact = await renderToBuffer(<QuotePdf company={company} client={client} code="ORC-2026-0003" version={1} issuedAt="2026-11-11T12:00:00Z" doc={long} calc={lcalc} density="compact" />);
+    if (process.env.PDF_OUT) writeFileSync(`${process.env.PDF_OUT}/longa-compacta.pdf`, compact);
+    expect(pdfPageCount(normal)).toBeGreaterThanOrEqual(1);
+    expect(pdfPageCount(compact)).toBe(1);
+  }, 60_000);
 });
