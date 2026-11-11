@@ -11,6 +11,7 @@ import { authRoutes } from './routes/auth';
 import { clientRoutes, materialRoutes, serviceRoutes, supplierRoutes } from './routes/catalog';
 import { companyRoutes } from './routes/company';
 import { dashboardRoutes, quoteRoutes } from './routes/quotes';
+import { stockRoutes } from './routes/stock';
 
 const app = new Hono<AppEnv>();
 
@@ -42,6 +43,7 @@ api.route('/materials', materialRoutes);
 api.route('/services', serviceRoutes);
 api.route('/quotes', quoteRoutes);
 api.route('/dashboard', dashboardRoutes);
+api.route('/stock', stockRoutes);
 app.route('/', api);
 
 app.notFound((c) => c.json({ error: 'Rota não encontrada.' }, 404));

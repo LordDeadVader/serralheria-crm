@@ -12,6 +12,7 @@ import {
   Shapes,
   Truck,
   Users,
+  Warehouse,
   Wrench,
   X,
 } from 'lucide-react';
@@ -25,6 +26,7 @@ const NAV = [
   { to: '/materiais', label: 'Materiais', icon: Boxes },
   { to: '/servicos', label: 'Serviços e mão de obra', icon: Wrench },
   { to: '/fornecedores', label: 'Fornecedores', icon: Truck },
+  { to: '/estoque', label: 'Estoque', icon: Warehouse },
   { to: '/modelos', label: 'Projetos e modelos', icon: Shapes },
   { to: '/producao', label: 'Produção', icon: Factory },
   { to: '/relatorios', label: 'Relatórios', icon: BarChart3 },

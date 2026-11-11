@@ -56,6 +56,16 @@ export function DashboardPage() {
           </ol>
         </Panel>
       )}
+      {(counts?.lowStock ?? 0) + (counts?.outOfStock ?? 0) > 0 && (
+        <Link to="/estoque" className="mb-4 flex items-center justify-between gap-3 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-900 hover:bg-amber-100/60">
+          <span>
+            <strong>Estoque:</strong> {counts?.outOfStock ? `${counts.outOfStock} item(ns) zerado(s)` : ''}
+            {counts?.outOfStock && counts?.lowStock ? ' e ' : ''}
+            {counts?.lowStock ? `${counts.lowStock} abaixo do mínimo` : ''}.
+          </span>
+          <span className="shrink-0 font-medium">Ver o que repor →</span>
+        </Link>
+      )}
       <div className="mb-4 grid grid-cols-2 gap-px overflow-hidden rounded-lg border border-gray-200 bg-gray-200 lg:grid-cols-5">
         {[
           <Stat key="a" label="Em aberto" value={formatBRL(sum(OPEN, 'total'))} sub={`${sum(OPEN, 'n')} orçamento(s)`} />,

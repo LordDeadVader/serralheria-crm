@@ -9,6 +9,7 @@ import { ClientDetailPage } from './pages/ClientDetailPage';
 import { MaterialsPage } from './pages/MaterialsPage';
 import { ServicesPage } from './pages/ServicesPage';
 import { SuppliersPage } from './pages/SuppliersPage';
+import { StockPage } from './pages/StockPage';
 import { QuotesPage } from './pages/QuotesPage';
 import { QuoteEditorPage } from './pages/QuoteEditorPage';
 import { QuoteViewPage } from './pages/QuoteViewPage';
@@ -41,6 +42,7 @@ export function App() {
         <Route path="materiais" element={<MaterialsPage />} />
         <Route path="servicos" element={<ServicesPage />} />
         <Route path="fornecedores" element={<SuppliersPage />} />
+        <Route path="estoque" element={<StockPage />} />
         <Route path="modelos" element={<TemplatesPage />} />
         <Route path="producao" element={<ProductionPage />} />
         <Route path="relatorios" element={<ReportsPage />} />

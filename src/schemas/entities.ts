@@ -118,3 +118,35 @@ export const changePasswordSchema = z.object({
   currentPassword: z.string().min(1).max(128),
   newPassword: passwordSchema,
 });
+
+/* ------------------------------- Estoque ------------------------------- */
+
+export const STOCK_KINDS = ['material', 'insumo', 'ferramenta', 'epi', 'outro'] as const;
+export type StockKind = (typeof STOCK_KINDS)[number];
+
+const stockQty = z.coerce.number().min(0, 'Não pode ser negativo').max(10_000_000);
+
+export const stockItemSchema = z.object({
+  name: z.string().trim().min(2, 'Informe o nome').max(160),
+  kind: z.enum(STOCK_KINDS).default('insumo'),
+  category: str(80),
+  unit: z.string().trim().min(1, 'Informe a unidade').max(20).default('un'),
+  minQuantity: stockQty.default(0),
+  location: str(120),
+  materialId: z.preprocess((v) => (v === '' ? null : v), z.string().max(64).nullable().default(null)),
+  notes: str(2000),
+  /** Só na criação: saldo inicial (gera uma movimentação de entrada). */
+  initialQuantity: stockQty.optional(),
+});
+export type StockItemInput = z.infer<typeof stockItemSchema>;
+
+export const stockMovementSchema = z
+  .object({
+    type: z.enum(['entrada', 'saida', 'ajuste']),
+    /** entrada/saída: quantidade; ajuste: quantidade contada no estoque. */
+    qty: stockQty,
+    reference: str(160),
+    note: str(500),
+  })
+  .refine((m) => m.type === 'ajuste' || m.qty > 0, { path: ['qty'], message: 'Informe uma quantidade maior que zero' });
+export type StockMovementInput = z.infer<typeof stockMovementSchema>;

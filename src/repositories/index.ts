@@ -1,7 +1,7 @@
 /** Repositórios do frontend: encapsulam os endpoints da API por entidade. */
-import type { ClientInput, CompanyInput, MaterialInput, ServiceInput, SupplierInput } from '../schemas/entities';
+import type { ClientInput, CompanyInput, MaterialInput, ServiceInput, StockItemInput, StockMovementInput, SupplierInput } from '../schemas/entities';
 import type { QuoteDocument } from '../schemas/quote';
-import type { Client, Company, Material, PriceHistory, QuoteDetail, QuoteStatus, QuoteSummary, Service, Supplier, User } from '../types/domain';
+import type { Client, Company, Material, PriceHistory, QuoteDetail, QuoteStatus, QuoteSummary, Service, StockItem, StockMovement, Supplier, User } from '../types/domain';
 import { del, get, post, put, qs } from '../services/api';
 
 export const authRepo = {
@@ -65,9 +65,18 @@ export const quotesRepo = {
   remove: (id: string) => del(`/quotes/${id}`),
 };
 
+export const stockRepo = {
+  list: (f: { q?: string; kind?: string } = {}) => get<StockItem[]>(`/stock${qs(f)}`),
+  create: (d: StockItemInput) => post<StockItem>('/stock', d),
+  update: (id: string, d: StockItemInput) => put<StockItem>(`/stock/${id}`, d),
+  remove: (id: string) => del<{ archived: boolean }>(`/stock/${id}`),
+  movements: (id: string) => get<StockMovement[]>(`/stock/${id}/movements`),
+  move: (id: string, d: StockMovementInput) => post<{ item: StockItem; movement: StockMovement }>(`/stock/${id}/movements`, d),
+};
+
 export interface DashboardData {
   byStatus: Array<{ status: QuoteStatus; n: number; total: number }>;
-  counts: { clients: number; materials: number; services: number } | null;
+  counts: { clients: number; materials: number; services: number; lowStock: number; outOfStock: number } | null;
   recent: QuoteSummary[];
   followups: QuoteSummary[];
   monthly: Array<{ month: string; created: number; approved: number; approvedTotal: number; approvedCost: number; quotedTotal: number }>;

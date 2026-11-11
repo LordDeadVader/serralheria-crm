@@ -130,7 +130,30 @@ ok((await call('DELETE', `/materials/${mats[0].id}`, B)).status === 404, 'empres
 const listB = await call('GET', '/quotes', B);
 ok(Array.isArray(listB.data) && listB.data.length === 0, 'lista de orçamentos de B vazia');
 
-console.log('5. Encerramento');
+console.log('5. Estoque');
+const st = await call('POST', '/stock', A, { name: 'Estanho 60/40', kind: 'insumo', unit: 'kg', minQuantity: 1, initialQuantity: 3 });
+ok(st.status === 201 && st.data.quantity === 3, 'item criado com saldo inicial 3 kg');
+const sid = st.data.id;
+const out1 = await call('POST', `/stock/${sid}/movements`, A, { type: 'saida', qty: 2.5, reference: 'Obra teste' });
+ok(out1.status === 201 && out1.data.item.quantity === 0.5, 'saída de 2,5 → saldo 0,5');
+const over = await call('POST', `/stock/${sid}/movements`, A, { type: 'saida', qty: 1 });
+ok(over.status === 409, 'saída maior que o saldo é recusada');
+const inn = await call('POST', `/stock/${sid}/movements`, A, { type: 'entrada', qty: 4, reference: 'Compra' });
+ok(inn.data?.item?.quantity === 4.5, 'entrada de 4 → saldo 4,5');
+const adj = await call('POST', `/stock/${sid}/movements`, A, { type: 'ajuste', qty: 4 });
+ok(adj.data?.item?.quantity === 4 && adj.data.movement.qty === -0.5, 'ajuste de inventário registra a diferença (−0,5)');
+const hist = await call('GET', `/stock/${sid}/movements`, A);
+ok(hist.data?.length === 4 && hist.data[0].type === 'ajuste', 'histórico com 4 movimentações');
+await call('POST', `/stock/${sid}/movements`, A, { type: 'saida', qty: 3.5 });
+const dash = await call('GET', '/dashboard', A);
+ok(dash.data?.counts?.lowStock === 1, 'painel aponta item abaixo do mínimo');
+ok((await call('GET', '/stock', B)).data?.length === 0, 'empresa B não vê estoque de A');
+ok((await call('POST', `/stock/${sid}/movements`, B, { type: 'saida', qty: 0.1 })).status === 404, 'empresa B não movimenta estoque de A');
+ok((await call('DELETE', `/stock/${sid}`, B)).status === 404, 'empresa B não exclui item de A');
+const delA = await call('DELETE', `/stock/${sid}`, A);
+ok(delA.data?.archived === true, 'item com histórico é arquivado, não apagado');
+
+console.log('6. Encerramento');
 ok((await call('DELETE', `/clients/${client.data.id}`, A)).status === 409, 'cliente com orçamentos não é excluído (arquivar)');
 ok((await call('POST', '/auth/logout', A)).status === 200, 'logout');
 ok((await call('GET', '/auth/me', A)).status === 401, 'token invalidado após logout');

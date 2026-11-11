@@ -329,6 +329,8 @@ export async function dashboard(db: DB, companyId: string) {
       clients: sql<number>`(select count(*) from clients where company_id = ${companyId} and archived_at is null)`,
       materials: sql<number>`(select count(*) from materials where company_id = ${companyId} and status = 'ativo')`,
       services: sql<number>`(select count(*) from services where company_id = ${companyId} and status = 'ativo')`,
+      lowStock: sql<number>`(select count(*) from stock_items where company_id = ${companyId} and archived_at is null and min_quantity > 0 and quantity > 0 and quantity <= min_quantity)`,
+      outOfStock: sql<number>`(select count(*) from stock_items where company_id = ${companyId} and archived_at is null and quantity <= 0)`,
     })
     .from(companies)
     .where(eq(companies.id, companyId))

@@ -235,3 +235,47 @@ export const quoteEvents = sqliteTable(
   },
   (t) => [index('quote_events_quote_idx').on(t.quoteId)],
 );
+
+/* ------------------------------- Estoque ------------------------------- */
+
+/** Itens de estoque: materiais, insumos (estanho, eletrodo, disco…), ferramentas, EPIs etc. */
+export const stockItems = sqliteTable(
+  'stock_items',
+  {
+    id: text('id').primaryKey(),
+    companyId: text('company_id').notNull().references(() => companies.id),
+    name: text('name').notNull(),
+    kind: text('kind', { enum: ['material', 'insumo', 'ferramenta', 'epi', 'outro'] }).notNull().default('insumo'),
+    category: text('category').notNull().default(''),
+    unit: text('unit').notNull().default('un'),
+    /** Saldo atual. Só muda por movimentação (entrada, saída ou ajuste). */
+    quantity: real('quantity').notNull().default(0),
+    minQuantity: real('min_quantity').notNull().default(0),
+    location: text('location').notNull().default(''),
+    materialId: text('material_id').references(() => materials.id, { onDelete: 'set null' }),
+    notes: text('notes').notNull().default(''),
+    archivedAt: text('archived_at'),
+    createdAt: text('created_at').notNull().default(now),
+    updatedAt: text('updated_at').notNull().default(now),
+  },
+  (t) => [index('stock_items_company_idx').on(t.companyId, t.name)],
+);
+
+/** Histórico de movimentações: quem, quando, quanto e o saldo resultante. */
+export const stockMovements = sqliteTable(
+  'stock_movements',
+  {
+    id: text('id').primaryKey(),
+    companyId: text('company_id').notNull().references(() => companies.id),
+    itemId: text('item_id').notNull().references(() => stockItems.id, { onDelete: 'cascade' }),
+    type: text('type', { enum: ['entrada', 'saida', 'ajuste'] }).notNull(),
+    /** entrada/saída: quantidade movimentada; ajuste: diferença aplicada (contagem − saldo anterior). */
+    qty: real('qty').notNull(),
+    balanceAfter: real('balance_after').notNull(),
+    reference: text('reference').notNull().default(''),
+    note: text('note').notNull().default(''),
+    userId: text('user_id'),
+    createdAt: text('created_at').notNull().default(now),
+  },
+  (t) => [index('stock_mov_item_idx').on(t.itemId, t.createdAt)],
+);

@@ -198,3 +198,40 @@ export interface QuoteDetail extends QuoteSummary {
   events: QuoteEvent[];
   client: Client | null;
 }
+
+export type { StockKind } from '../schemas/entities';
+
+export const STOCK_KIND_LABEL: Record<import('../schemas/entities').StockKind, string> = {
+  material: 'Material',
+  insumo: 'Insumo / consumível',
+  ferramenta: 'Ferramenta',
+  epi: 'EPI',
+  outro: 'Outro',
+};
+
+export interface StockItem {
+  id: string;
+  name: string;
+  kind: import('../schemas/entities').StockKind;
+  category: string;
+  unit: string;
+  quantity: number;
+  minQuantity: number;
+  location: string;
+  materialId: string | null;
+  materialName: string | null;
+  notes: string;
+  lastMovementAt: string | null;
+  updatedAt: string;
+}
+
+export interface StockMovement {
+  id: string;
+  type: 'entrada' | 'saida' | 'ajuste';
+  qty: number;
+  balanceAfter: number;
+  reference: string;
+  note: string;
+  userName: string | null;
+  createdAt: string;
+}
