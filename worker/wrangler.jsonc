@@ -1,0 +1,19 @@
+{
+  "$schema": "../node_modules/wrangler/config-schema.json",
+  "name": "serralheria-crm-api",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-10-01",
+  "observability": { "enabled": true },
+  "vars": {
+    // Origens autorizadas a chamar a API (CORS). Separe por vírgula.
+    "ALLOWED_ORIGINS": "https://lorddeadvader.github.io,http://localhost:5173,http://127.0.0.1:5173"
+  },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "serralheria-crm-db",
+      "database_id": "868bb98b-0977-4e60-9c33-120ae09b9707",
+      "migrations_dir": "migrations"
+    }
+  ]
+}
