@@ -33,3 +33,16 @@ export function parseNum(v: string): number {
 export function newKey() {
   return Math.random().toString(36).slice(2, 10) + Date.now().toString(36).slice(-4);
 }
+
+/** Divide horas decimais em horas e minutos inteiros (1,5 → 1 h 30 min). */
+export function splitHours(hours: number): { h: number; m: number } {
+  const total = Math.round((Number.isFinite(hours) ? Math.max(0, hours) : 0) * 60);
+  return { h: Math.floor(total / 60), m: total % 60 };
+}
+
+/** Tempo legível: "2 h", "45 min", "1 h 30 min". */
+export function formatDuration(hours: number | null | undefined): string {
+  const { h, m } = splitHours(hours ?? 0);
+  if (!h && !m) return '0 h';
+  return [h ? `${h} h` : '', m ? `${m} min` : ''].filter(Boolean).join(' ');
+}

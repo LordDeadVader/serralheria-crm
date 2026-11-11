@@ -3,6 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { Plus, Trash2, UserPlus } from 'lucide-react';
 import { ClientFormModal, formatAddress } from '../../components/ClientFormModal';
 import { NumInput } from '../../components/NumInput';
+import { DurationInput } from '../../components/DurationInput';
 import { Badge, Button, Checkbox, Empty, Input, Panel, Select, Textarea, cx } from '../../components/ui';
 import type { CalcResult } from '../../calculations/engine';
 import { paymentPlan } from '../../calculations/engine';
@@ -295,15 +296,15 @@ export function LaborStep({ doc, update, errors, calc, company }: StepProps) {
         </Button>
       </div>
       {doc.labor.length === 0 ? (
-        <Empty title="Nenhum serviço adicionado">Ex.: 4 horas de soldagem × R$ 35,00 = R$ 140,00.</Empty>
+        <Empty title="Nenhum serviço adicionado">Ex.: 4 h 30 min de soldagem × R$ 35,00/h = R$ 157,50.</Empty>
       ) : (
         <div className="overflow-x-auto">
-          <table className="tbl tbl-cards md:min-w-[680px]">
+          <table className="tbl tbl-cards md:min-w-[780px]">
             <thead>
               <tr>
                 <th>Serviço</th>
-                <th className="w-32">Cobrança</th>
-                <th className="w-28 text-right">Horas/Qtde.</th>
+                <th className="w-36">Cobrança</th>
+                <th className="w-44 text-right">Tempo / Qtde.</th>
                 <th className="w-32 text-right">Valor</th>
                 <th className="w-32 text-right">Subtotal</th>
                 <th className="w-px" />
@@ -322,7 +323,11 @@ export function LaborStep({ doc, update, errors, calc, company }: StepProps) {
                     </Select>
                   </td>
                   <td className="c-half">
-                    <NumInput ariaLabel="Quantidade" value={l.qty} onChange={(n) => update((d) => void (d.labor[i].qty = n ?? 0))} suffix={l.mode === 'hour' ? 'h' : ''} />
+                    {l.mode === 'hour' ? (
+                      <DurationInput ariaLabel="Tempo" value={l.qty} onChange={(h) => update((d) => void (d.labor[i].qty = h))} />
+                    ) : (
+                      <NumInput ariaLabel="Quantidade" value={l.qty} onChange={(n) => update((d) => void (d.labor[i].qty = n ?? 0))} />
+                    )}
                   </td>
                   <td className="c-half">
                     <NumInput ariaLabel="Valor" value={l.rate} onChange={(n) => update((d) => void (d.labor[i].rate = n ?? 0))} />

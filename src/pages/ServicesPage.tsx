@@ -3,9 +3,11 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Pencil, Plus, Trash2 } from 'lucide-react';
 import { DemoBadge } from '../components/StatusBadge';
 import { NumInput } from '../components/NumInput';
+import { DurationInput } from '../components/DurationInput';
+import { formatDuration } from '../lib/format';
 import { useFeedback } from '../components/feedback';
 import { Badge, Button, Empty, ErrorBox, Input, Modal, PageHeader, Select, Spinner, TableWrap, Textarea, cx } from '../components/ui';
-import { formatBRL, formatNumber, roundMoney } from '../calculations/money';
+import { formatBRL, roundMoney } from '../calculations/money';
 import { useForm } from '../hooks/useForm';
 import { servicesRepo } from '../repositories';
 import { serviceSchema, type ServiceInput } from '../schemas/entities';
@@ -74,7 +76,7 @@ export function ServicesPage() {
                   <td className="text-gray-600 md:hidden lg:table-cell">{s.category || '—'}</td>
                   <td className="text-gray-600">{s.mode === 'hour' ? 'Por hora' : `Preço fixo / ${s.unit}`}</td>
                   <td className="num text-right">{s.mode === 'hour' ? `${formatBRL(s.hourlyCost)}/h` : formatBRL(s.fixedPrice)}</td>
-                  <td className={cx('num text-right', s.mode !== 'hour' && 'max-md:hidden')}>{s.mode === 'hour' ? `${formatNumber(s.estimatedHours)} h` : '—'}</td>
+                  <td className={cx('num text-right', s.mode !== 'hour' && 'max-md:hidden')}>{s.mode === 'hour' ? formatDuration(s.estimatedHours) : '—'}</td>
                   <td className="num text-right">{formatBRL(s.mode === 'hour' ? roundMoney(s.hourlyCost * s.estimatedHours) : s.fixedPrice)}</td>
                   <td className="c-actions">
                     <div className="flex justify-end gap-1">
@@ -158,9 +160,9 @@ function ServiceFormModal({ open, service, onClose }: { open: boolean; service: 
         {v.mode === 'hour' ? (
           <>
             <NumInput label="Custo por hora *" suffix="R$" value={v.hourlyCost} onChange={(n) => f.set('hourlyCost', n ?? 0)} error={f.errors.hourlyCost} />
-            <NumInput label="Tempo estimado" suffix="h" value={v.estimatedHours} onChange={(n) => f.set('estimatedHours', n ?? 0)} />
+            <DurationInput label="Tempo estimado" value={v.estimatedHours} onChange={(h) => f.set('estimatedHours', h)} />
             <div className="flex items-end pb-2 text-sm text-gray-600 sm:col-span-2">
-              {formatNumber(v.estimatedHours)} h × {formatBRL(v.hourlyCost)} = <strong className="num ml-1 text-gray-900">{formatBRL(roundMoney(v.estimatedHours * v.hourlyCost))}</strong>
+              {formatDuration(v.estimatedHours)} × {formatBRL(v.hourlyCost)}/h = <strong className="num ml-1 text-gray-900">{formatBRL(roundMoney(v.estimatedHours * v.hourlyCost))}</strong>
             </div>
           </>
         ) : (

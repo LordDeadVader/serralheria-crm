@@ -10,7 +10,7 @@ import { useFeedback } from '../components/feedback';
 import { Button, ErrorBox, Input, Modal, Panel, Select, Spinner, Textarea, cx } from '../components/ui';
 import { formatBRL, formatNumber, formatPct } from '../calculations/money';
 import { unitShort } from '../calculations/units';
-import { formatDate, formatDateTime } from '../lib/format';
+import { formatDate, formatDateTime, formatDuration } from '../lib/format';
 import { generateQuotePdf, pdfFileName } from '../pdf/generate';
 import { companyRepo, quotesRepo } from '../repositories';
 import { onlyDigits } from '../schemas/common';
@@ -195,7 +195,7 @@ function View({ quote, viewingVersion, setVersion }: { quote: QuoteDetail; viewi
                   {doc.labor.map((l, i) => (
                     <tr key={l.key}>
                       <td className="c-main">{l.name}</td>
-                      <td className="num text-right">{l.mode === 'hour' ? `${formatNumber(l.qty)} h` : formatNumber(l.qty)}</td>
+                      <td className="num text-right">{l.mode === 'hour' ? formatDuration(l.qty) : formatNumber(l.qty)}</td>
                       <td className="num text-right">{formatBRL(l.rate)}</td>
                       <td className="num text-right">{formatBRL(t.laborLines[i])}</td>
                     </tr>
