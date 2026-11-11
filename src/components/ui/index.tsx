@@ -99,11 +99,11 @@ export function Select({ label, error, hint, wrapClass, className, children, id,
   );
 }
 
-export function Textarea({ label, error, wrapClass, className, id, ...p }: TextareaHTMLAttributes<HTMLTextAreaElement> & { label?: string; error?: string; wrapClass?: string }) {
+export function Textarea({ label, error, hint, wrapClass, className, id, ...p }: TextareaHTMLAttributes<HTMLTextAreaElement> & { label?: string; error?: string; hint?: ReactNode; wrapClass?: string }) {
   const auto = useId();
   const iid = id ?? auto;
   return (
-    <Field label={label} error={error} className={wrapClass} htmlFor={iid}>
+    <Field label={label} error={error} hint={hint} className={wrapClass} htmlFor={iid}>
       <textarea id={iid} rows={3} className={cx(inputCls, 'resize-y', error && 'border-red-400', className)} {...p} />
     </Field>
   );

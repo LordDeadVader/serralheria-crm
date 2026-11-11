@@ -85,7 +85,15 @@ export function ProjectStep({ doc, update, errors }: StepProps) {
             <option key={s}>{s}</option>
           ))}
         </Select>
-        <Textarea wrapClass="sm:col-span-6" label="Descrição (aparece na proposta)" value={p.description} onChange={(e) => set('description', e.target.value)} rows={3} />
+        <Textarea
+          wrapClass="sm:col-span-6"
+          label="Descrição — o que será feito (aparece na proposta)"
+          value={p.description}
+          onChange={(e) => set('description', e.target.value)}
+          rows={2}
+          placeholder="Ex.: Testeira em ACM branco brilho adesivado para fachada."
+          hint="Resumo em 1 ou 2 frases, em linguagem do cliente. Aparece logo abaixo do nome do projeto. As medidas vão nos campos abaixo — não precisa repetir aqui."
+        />
         <NumInput label="Largura" nullable value={p.width} onChange={(n) => set('width', n)} suffix={p.dimensionUnit} />
         <NumInput label="Altura" nullable value={p.height} onChange={(n) => set('height', n)} suffix={p.dimensionUnit} />
         <NumInput label="Profundidade" nullable value={p.depth} onChange={(n) => set('depth', n)} suffix={p.dimensionUnit} />
@@ -97,8 +105,16 @@ export function ProjectStep({ doc, update, errors }: StepProps) {
         <NumInput wrapClass="sm:col-span-2" label="Quantidade *" value={p.quantity} onChange={(n) => set('quantity', n ?? 0)} error={errors['project.quantity']} hint="Materiais e mão de obra são informados por unidade." />
         <Input wrapClass="sm:col-span-3" label="Local de instalação" value={p.installLocation} onChange={(e) => set('installLocation', e.target.value)} />
         <Input wrapClass="sm:col-span-3" label="Acabamento" value={p.finish} onChange={(e) => set('finish', e.target.value)} placeholder="Ex.: fundo anticorrosivo + esmalte preto fosco" />
-        <Textarea wrapClass="sm:col-span-6" label="Especificações técnicas (aparece na proposta)" value={p.specifications} onChange={(e) => set('specifications', e.target.value)} rows={3} />
-        <Textarea wrapClass="sm:col-span-6" label="Observações internas" value={p.notes} onChange={(e) => set('notes', e.target.value)} rows={2} />
+        <Textarea
+          wrapClass="sm:col-span-6"
+          label="Especificações técnicas — como será feito (opcional, aparece na proposta)"
+          value={p.specifications}
+          onChange={(e) => set('specifications', e.target.value)}
+          rows={4}
+          placeholder={'Ex.:\n- Chapa ACM 3 mm branco brilho\n- Estrutura interna em metalon galvanizado\n- Fixação com parafusos autobrocantes\n- Instalação inclusa'}
+          hint="Materiais, espessuras, estrutura, fixação e o que está incluso — um item por linha. Aparece em um bloco separado, depois das medidas. Deixe em branco se a descrição já basta."
+        />
+        <Textarea wrapClass="sm:col-span-6" label="Observações internas" value={p.notes} onChange={(e) => set('notes', e.target.value)} rows={2} hint="Só para a sua equipe — não aparece na proposta." />
       </div>
     </Panel>
   );
