@@ -11,6 +11,12 @@ import { formatDate } from '../lib/format';
 
 const WON = ['aprovado', 'em_producao', 'concluido'];
 
+/** Número no formato do wa.me (com DDI 55 quando o cadastro tem só DDD + número). */
+function waNumber(phone: string) {
+  const d = phone.replace(/\D/g, '');
+  return d.length <= 11 ? `55${d}` : d;
+}
+
 export function ClientDetailPage() {
   const { id = '' } = useParams();
   const nav = useNavigate();
@@ -44,16 +50,26 @@ export function ClientDetailPage() {
       <div className="grid gap-4 lg:grid-cols-3">
         <Panel title="Dados de contato">
           <dl className="space-y-2 text-sm">
-            {[
-              ['Telefone', c.phone],
-              ['WhatsApp', c.whatsapp],
-              ['E-mail', c.email],
-              ['Endereço', formatAddress(c)],
-              ['Observações', c.notes],
-            ].map(([k, v]) => (
+            {(
+              [
+                ['Telefone', c.phone, c.phone && `tel:${c.phone.replace(/\D/g, '')}`],
+                ['WhatsApp', c.whatsapp, c.whatsapp && `https://wa.me/${waNumber(c.whatsapp)}`],
+                ['E-mail', c.email, c.email && `mailto:${c.email}`],
+                ['Endereço', formatAddress(c), null],
+                ['Observações', c.notes, null],
+              ] as Array<[string, string | null | undefined, string | null | undefined | '']>
+            ).map(([k, v, href]) => (
               <div key={k}>
                 <dt className="text-xs text-gray-500">{k}</dt>
-                <dd className="whitespace-pre-line text-gray-900">{v || '—'}</dd>
+                <dd className="whitespace-pre-line break-words text-gray-900">
+                  {v && href ? (
+                    <a href={href} target={href.startsWith('http') ? '_blank' : undefined} rel="noopener noreferrer" className="text-brand-700 hover:underline">
+                      {v}
+                    </a>
+                  ) : (
+                    v || '—'
+                  )}
+                </dd>
               </div>
             ))}
           </dl>
@@ -72,30 +88,30 @@ export function ClientDetailPage() {
               <Empty title="Nenhum orçamento para este cliente" />
             ) : (
               <div className="overflow-x-auto">
-                <table className="tbl">
+                <table className="tbl tbl-cards">
                   <thead>
                     <tr>
                       <th>Número</th>
                       <th>Projeto</th>
                       <th>Status</th>
-                      <th className="hidden sm:table-cell">Atualizado</th>
+                      <th className="md:hidden lg:table-cell">Atualizado</th>
                       <th className="text-right">Valor</th>
                     </tr>
                   </thead>
                   <tbody>
                     {c.quotes.map((x) => (
                       <tr key={x.id}>
-                        <td>
+                        <td className="c-main">
                           <Link className="font-medium text-brand-700 hover:underline" to={`/orcamentos/${x.id}`}>
                             {x.code}
                           </Link>
                           <span className="ml-1 text-xs text-gray-400">v{x.currentVersion}</span>
                         </td>
                         <td className="text-gray-700">{x.title}</td>
-                        <td>
+                        <td className="c-side">
                           <StatusBadge status={x.status} />
                         </td>
-                        <td className="hidden text-gray-500 sm:table-cell">{formatDate(x.updatedAt)}</td>
+                        <td className="text-gray-500 md:hidden lg:table-cell">{formatDate(x.updatedAt)}</td>
                         <td className="num text-right font-medium">{formatBRL(x.total)}</td>
                       </tr>
                     ))}

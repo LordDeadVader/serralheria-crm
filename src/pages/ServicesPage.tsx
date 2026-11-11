@@ -4,7 +4,7 @@ import { Pencil, Plus, Trash2 } from 'lucide-react';
 import { DemoBadge } from '../components/StatusBadge';
 import { NumInput } from '../components/NumInput';
 import { useFeedback } from '../components/feedback';
-import { Badge, Button, Empty, ErrorBox, Input, Modal, PageHeader, Select, Spinner, TableWrap, Textarea } from '../components/ui';
+import { Badge, Button, Empty, ErrorBox, Input, Modal, PageHeader, Select, Spinner, TableWrap, Textarea, cx } from '../components/ui';
 import { formatBRL, formatNumber, roundMoney } from '../calculations/money';
 import { useForm } from '../hooks/useForm';
 import { servicesRepo } from '../repositories';
@@ -49,34 +49,34 @@ export function ServicesPage() {
         </TableWrap>
       ) : (
         <TableWrap>
-          <table className="tbl">
+          <table className="tbl tbl-cards">
             <thead>
               <tr>
                 <th>Serviço</th>
-                <th className="hidden md:table-cell">Categoria</th>
+                <th className="md:hidden lg:table-cell">Categoria</th>
                 <th>Cobrança</th>
                 <th className="text-right">Valor</th>
-                <th className="hidden text-right sm:table-cell">Tempo estimado</th>
-                <th className="hidden text-right sm:table-cell">Custo estimado</th>
+                <th className="text-right">Tempo estimado</th>
+                <th className="text-right">Custo estimado</th>
                 <th className="w-px" />
               </tr>
             </thead>
             <tbody>
               {list.data.map((s) => (
                 <tr key={s.id} className={s.status === 'inativo' ? 'opacity-60' : ''}>
-                  <td>
+                  <td className="c-main">
                     <div className="flex flex-wrap items-center gap-1.5">
                       <span className="font-medium">{s.name}</span>
                       {s.isDemo && <DemoBadge />}
                       {s.status === 'inativo' && <Badge>Inativo</Badge>}
                     </div>
                   </td>
-                  <td className="hidden text-gray-600 md:table-cell">{s.category || '—'}</td>
+                  <td className="text-gray-600 md:hidden lg:table-cell">{s.category || '—'}</td>
                   <td className="text-gray-600">{s.mode === 'hour' ? 'Por hora' : `Preço fixo / ${s.unit}`}</td>
                   <td className="num text-right">{s.mode === 'hour' ? `${formatBRL(s.hourlyCost)}/h` : formatBRL(s.fixedPrice)}</td>
-                  <td className="num hidden text-right sm:table-cell">{s.mode === 'hour' ? `${formatNumber(s.estimatedHours)} h` : '—'}</td>
-                  <td className="num hidden text-right sm:table-cell">{formatBRL(s.mode === 'hour' ? roundMoney(s.hourlyCost * s.estimatedHours) : s.fixedPrice)}</td>
-                  <td>
+                  <td className={cx('num text-right', s.mode !== 'hour' && 'max-md:hidden')}>{s.mode === 'hour' ? `${formatNumber(s.estimatedHours)} h` : '—'}</td>
+                  <td className="num text-right">{formatBRL(s.mode === 'hour' ? roundMoney(s.hourlyCost * s.estimatedHours) : s.fixedPrice)}</td>
+                  <td className="c-actions">
                     <div className="flex justify-end gap-1">
                       <Button size="sm" variant="ghost" title="Editar" onClick={() => setEditing(s)} icon={<Pencil className="size-3.5" />} />
                       <Button size="sm" variant="ghost" title="Excluir" onClick={() => remove(s)} icon={<Trash2 className="size-3.5 text-red-600" />} />

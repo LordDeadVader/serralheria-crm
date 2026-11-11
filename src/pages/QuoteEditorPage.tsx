@@ -80,9 +80,16 @@ function Editor({ initial, restored, quote }: { initial: QuoteDocument; restored
   const [dirty, setDirty] = useState(false);
   const [showRestored, setShowRestored] = useState(restored);
   const topRef = useRef<HTMLDivElement>(null);
+  const stepsRef = useRef<HTMLElement>(null);
 
   const locked = !!quote && (quote.current.locked || !EDITABLE_STATUSES.includes(quote.status));
   const calc = useMemo(() => calculateDocument(doc), [doc]);
+  // Mantém a etapa atual visível na barra de etapas (que rola na horizontal no celular).
+  useEffect(() => {
+    const nav = stepsRef.current;
+    const btn = nav?.querySelector<HTMLElement>(`[data-step="${step}"]`);
+    if (nav && btn) nav.scrollTo({ left: btn.offsetLeft - (nav.clientWidth - btn.offsetWidth) / 2, behavior: 'smooth' });
+  }, [step]);
 
   const update = useCallback((fn: (d: QuoteDocument) => void) => {
     setDoc((prev) => {
@@ -216,7 +223,7 @@ function Editor({ initial, restored, quote }: { initial: QuoteDocument; restored
         </div>
       )}
 
-      <nav className="mb-4 overflow-x-auto" aria-label="Etapas">
+      <nav ref={stepsRef} className="relative -mx-4 mb-4 overflow-x-auto px-4 sm:mx-0 sm:px-0" aria-label="Etapas">
         <ol className="flex min-w-max gap-1 rounded-lg border border-gray-200 bg-white p-1">
           {STEPS.map((s, i) => (
             <li key={s.key}>
@@ -227,6 +234,7 @@ function Editor({ initial, restored, quote }: { initial: QuoteDocument; restored
                   i === step ? 'bg-brand-700 text-white' : 'text-gray-600 hover:bg-gray-100',
                 )}
                 aria-current={i === step ? 'step' : undefined}
+                data-step={i}
               >
                 <span className={cx('flex size-5 items-center justify-center rounded-full text-[11px]', i === step ? 'bg-white/20' : 'bg-gray-100 text-gray-600')}>{i + 1}</span>
                 {s.label}
@@ -239,7 +247,7 @@ function Editor({ initial, restored, quote }: { initial: QuoteDocument; restored
       <div className="grid gap-4 lg:grid-cols-[1fr_300px]">
         <div className="min-w-0 space-y-4">
           {step === 7 ? <ReviewStep {...props} goTo={goTo} /> : <Body {...props} />}
-          <div className="flex items-center justify-between">
+          <div className="hidden items-center justify-between md:flex">
             <Button icon={<ChevronLeft className="size-4" />} onClick={() => goTo(step - 1)} disabled={step === 0}>
               Voltar
             </Button>
@@ -254,12 +262,35 @@ function Editor({ initial, restored, quote }: { initial: QuoteDocument; restored
             )}
           </div>
         </div>
-        <aside className="lg:sticky lg:top-6 lg:self-start">
+        <aside className="mb-20 md:mb-0 lg:sticky lg:top-6 lg:self-start">
           <Panel title="Resumo financeiro (interno)">
             <CostSummary r={calc} quantity={doc.project.quantity} />
           </Panel>
           <p className="mt-2 px-1 text-[11px] text-gray-500">Custos, margem e lucro são internos e não aparecem na proposta do cliente. Total: {formatBRL(calc.finalPrice)}.</p>
         </aside>
+      </div>
+
+      <div className="safe-bottom fixed inset-x-0 bottom-0 z-30 border-t border-gray-200 bg-white px-4 pt-2 md:hidden">
+        <div className="mb-2 flex items-baseline justify-between text-sm">
+          <span className="text-gray-500">
+            Etapa {step + 1} de {STEPS.length} · {STEPS[step].label}
+          </span>
+          <span className={cx('num font-semibold', calc.valid ? 'text-gray-900' : 'text-red-700')}>{calc.valid ? formatBRL(calc.finalPrice) : 'Preço inválido'}</span>
+        </div>
+        <div className="flex gap-2">
+          <Button className="flex-1" icon={<ChevronLeft className="size-4" />} onClick={() => goTo(step - 1)} disabled={step === 0}>
+            Voltar
+          </Button>
+          {step < 7 ? (
+            <Button className="flex-1" variant="primary" onClick={() => goTo(step + 1)}>
+              Próximo <ChevronRight className="size-4" />
+            </Button>
+          ) : (
+            <Button className="flex-1" variant="primary" icon={<Save className="size-4" />} loading={busy} onClick={() => save('em_elaboracao')}>
+              {locked ? 'Nova versão' : 'Salvar'}
+            </Button>
+          )}
+        </div>
       </div>
     </div>
   );

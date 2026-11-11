@@ -52,13 +52,13 @@ export function SuppliersPage() {
         </TableWrap>
       ) : (
         <TableWrap>
-          <table className="tbl">
+          <table className="tbl tbl-cards">
             <thead>
               <tr>
                 <th>Fornecedor</th>
-                <th className="hidden md:table-cell">Contato</th>
-                <th className="hidden sm:table-cell">Telefone</th>
-                <th className="hidden lg:table-cell">E-mail</th>
+                <th className="md:hidden lg:table-cell">Contato</th>
+                <th>Telefone</th>
+                <th className="md:hidden lg:table-cell">E-mail</th>
                 <th className="text-right">Materiais</th>
                 <th className="w-px" />
               </tr>
@@ -66,12 +66,12 @@ export function SuppliersPage() {
             <tbody>
               {list.data.map((s) => (
                 <tr key={s.id}>
-                  <td className="font-medium">{s.name}</td>
-                  <td className="hidden text-gray-600 md:table-cell">{s.contact || '—'}</td>
-                  <td className="hidden text-gray-600 sm:table-cell">{s.phone || '—'}</td>
-                  <td className="hidden text-gray-600 lg:table-cell">{s.email || '—'}</td>
+                  <td className="c-main font-medium">{s.name}</td>
+                  <td className="text-gray-600 md:hidden lg:table-cell">{s.contact || '—'}</td>
+                  <td className="text-gray-600">{s.phone || '—'}</td>
+                  <td className="break-all text-gray-600 md:hidden lg:table-cell">{s.email || '—'}</td>
                   <td className="num text-right">{s.materialCount}</td>
-                  <td>
+                  <td className="c-actions">
                     <div className="flex justify-end gap-1">
                       <Button size="sm" variant="ghost" title="Editar" onClick={() => setEditing(s)} icon={<Pencil className="size-3.5" />} />
                       <Button size="sm" variant="ghost" title="Remover" onClick={() => remove(s)} icon={<Trash2 className="size-3.5 text-red-600" />} />

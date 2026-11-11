@@ -6,6 +6,7 @@ import { AuthProvider } from './authentication/AuthContext';
 import { FeedbackProvider } from './components/feedback';
 import { App } from './App';
 import './index.css';
+import { startCardTableLabels } from './lib/cardTables';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -31,3 +32,5 @@ createRoot(document.getElementById('root')!).render(
     </QueryClientProvider>
   </StrictMode>,
 );
+
+startCardTableLabels();

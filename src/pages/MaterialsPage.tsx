@@ -67,15 +67,15 @@ export function MaterialsPage() {
         </TableWrap>
       ) : (
         <TableWrap>
-          <table className="tbl">
+          <table className="tbl tbl-cards">
             <thead>
               <tr>
-                <th className="hidden sm:table-cell">Código</th>
+                <th className="hidden lg:table-cell">Código</th>
                 <th>Material</th>
-                <th className="hidden lg:table-cell">Categoria</th>
+                <th className="md:hidden lg:table-cell">Categoria</th>
                 <th className="text-right">Compra</th>
                 <th className="text-right">Custo de uso</th>
-                <th className="hidden md:table-cell">Atualizado</th>
+                <th className="md:hidden lg:table-cell">Atualizado</th>
                 <th className="w-px" />
               </tr>
             </thead>
@@ -84,8 +84,8 @@ export function MaterialsPage() {
                 const c = safeCostPerUsageUnit({ purchasePrice: m.purchasePrice, packQty: m.packQty, packUnit: m.packUnit, usageUnit: m.usageUnit, packWeightKg: m.weightKg });
                 return (
                   <tr key={m.id} className={m.status === 'inativo' ? 'opacity-60' : ''}>
-                    <td className="hidden text-gray-500 sm:table-cell">{m.code || '—'}</td>
-                    <td>
+                    <td className="hidden text-gray-500 lg:table-cell">{m.code || '—'}</td>
+                    <td className="c-main">
                       <div className="flex flex-wrap items-center gap-1.5">
                         <span className="font-medium text-gray-900">{m.name}</span>
                         {m.isDemo && <DemoBadge />}
@@ -93,25 +93,27 @@ export function MaterialsPage() {
                       </div>
                       {m.supplierName && <p className="text-xs text-gray-500">{m.supplierName}</p>}
                     </td>
-                    <td className="hidden text-gray-600 lg:table-cell">{m.category || '—'}</td>
+                    <td className="text-gray-600 md:hidden lg:table-cell">{m.category || '—'}</td>
                     <td className="num text-right">
-                      {formatBRL(m.purchasePrice)}
-                      <span className="block text-xs text-gray-500">
-                        {m.purchaseUnit} · {formatNumber(m.packQty, 3)} {unitShort(m.packUnit)}
-                      </span>
+                      <div>
+                        {formatBRL(m.purchasePrice)}
+                        <span className="block text-xs text-gray-500">
+                          {m.purchaseUnit} · {formatNumber(m.packQty, 3)} {unitShort(m.packUnit)}
+                        </span>
+                      </div>
                     </td>
                     <td className="num text-right font-medium">
                       {c.value != null ? (
-                        <>
+                        <span>
                           {formatBRL(c.value)}
                           <span className="text-xs font-normal text-gray-500">/{unitShort(m.usageUnit)}</span>
-                        </>
+                        </span>
                       ) : (
                         <span className="text-xs text-red-600">Conversão inválida</span>
                       )}
                     </td>
-                    <td className="hidden text-gray-500 md:table-cell">{formatDate(m.priceUpdatedAt)}</td>
-                    <td>
+                    <td className="text-gray-500 md:hidden lg:table-cell">{formatDate(m.priceUpdatedAt)}</td>
+                    <td className="c-actions">
                       <div className="flex justify-end gap-1">
                         <Button size="sm" variant="ghost" title="Histórico de preços" onClick={() => setHist(m)} icon={<History className="size-3.5" />} />
                         <Button size="sm" variant="ghost" title="Editar" onClick={() => setEditing(m)} icon={<Pencil className="size-3.5" />} />
@@ -291,7 +293,7 @@ function PriceHistoryModal({ material, onClose }: { material: Material | null; o
       ) : !h.data?.length ? (
         <Empty title="Sem histórico" />
       ) : (
-        <table className="tbl">
+        <table className="tbl tbl-cards">
           <thead>
             <tr>
               <th>Data</th>
@@ -306,7 +308,9 @@ function PriceHistoryModal({ material, onClose }: { material: Material | null; o
                 <td>{formatDateTime(r.changedAt)}</td>
                 <td className="num text-right">{formatBRL(r.price)}</td>
                 <td>
-                  {formatNumber(r.packQty, 3)} {unitShort(r.packUnit)}
+                  <span>
+                    {formatNumber(r.packQty, 3)} {unitShort(r.packUnit)}
+                  </span>
                 </td>
                 <td className="text-gray-500">{r.userName ?? 'Sistema'}</td>
               </tr>

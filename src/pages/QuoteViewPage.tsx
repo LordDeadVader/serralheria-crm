@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react';
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { ArrowLeft, Copy, Download, FileText, GitBranch, MessageCircle, Pencil, Printer, Trash2 } from 'lucide-react';
+import { ArrowLeft, Copy, Download, ExternalLink, FileText, GitBranch, MessageCircle, Pencil, Printer, Trash2 } from 'lucide-react';
+import { useMediaQuery } from '../hooks/useMediaQuery';
 import { useAuth } from '../authentication/AuthContext';
 import { CostSummary } from '../components/CostSummary';
 import { StatusBadge } from '../components/StatusBadge';
@@ -119,7 +120,7 @@ function View({ quote, viewingVersion, setVersion }: { quote: QuoteDetail; viewi
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
-          <Button variant="primary" icon={<FileText className="size-4" />} onClick={() => setPdfOpen(true)}>
+          <Button variant="primary" className="max-sm:basis-full" icon={<FileText className="size-4" />} onClick={() => setPdfOpen(true)}>
             Proposta PDF
           </Button>
           {!isOld && !frozen && (
@@ -166,7 +167,7 @@ function View({ quote, viewingVersion, setVersion }: { quote: QuoteDetail; viewi
           </Panel>
           <Panel title="Composição de custos (interno)" bodyClass="p-0">
             <div className="overflow-x-auto">
-              <table className="tbl min-w-[560px]">
+              <table className="tbl tbl-cards md:min-w-[560px]">
                 <thead>
                   <tr>
                     <th>Item</th>
@@ -178,12 +179,14 @@ function View({ quote, viewingVersion, setVersion }: { quote: QuoteDetail; viewi
                 <tbody>
                   {doc.materials.map((m, i) => (
                     <tr key={m.key}>
-                      <td>
+                      <td className="c-main">
                         {m.name}
                         {m.wastePct > 0 && <span className="ml-1 text-xs text-gray-500">(+{formatPct(m.wastePct, 0)} desp.)</span>}
                       </td>
                       <td className="num text-right">
-                        {formatNumber(m.qty, 3)} {unitShort(m.unit)}
+                        <span>
+                          {formatNumber(m.qty, 3)} {unitShort(m.unit)}
+                        </span>
                       </td>
                       <td className="num text-right">{formatBRL(m.unitCost)}</td>
                       <td className="num text-right">{formatBRL(t.materialLines[i]?.total)}</td>
@@ -191,7 +194,7 @@ function View({ quote, viewingVersion, setVersion }: { quote: QuoteDetail; viewi
                   ))}
                   {doc.labor.map((l, i) => (
                     <tr key={l.key}>
-                      <td>{l.name}</td>
+                      <td className="c-main">{l.name}</td>
                       <td className="num text-right">{l.mode === 'hour' ? `${formatNumber(l.qty)} h` : formatNumber(l.qty)}</td>
                       <td className="num text-right">{formatBRL(l.rate)}</td>
                       <td className="num text-right">{formatBRL(t.laborLines[i])}</td>
@@ -199,7 +202,7 @@ function View({ quote, viewingVersion, setVersion }: { quote: QuoteDetail; viewi
                   ))}
                   {doc.extras.map((x) => (
                     <tr key={x.key}>
-                      <td>
+                      <td className="c-main">
                         {x.description} <span className="text-xs text-gray-500">({x.kind})</span>
                       </td>
                       <td />
@@ -353,6 +356,8 @@ function PdfModal({ open, onClose, quote }: { open: boolean; onClose: () => void
   const [blob, setBlob] = useState<Blob | null>(null);
   const [busy, setBusy] = useState(false);
   const fileName = pdfFileName(quote.code, quote.current.version);
+  // Navegadores de celular (Chrome Android, Safari iOS) não exibem PDF embutido de forma confiável.
+  const mobile = useMediaQuery('(max-width: 767px), (pointer: coarse)');
 
   useEffect(() => {
     if (!open || !company.data) return;
@@ -393,8 +398,19 @@ function PdfModal({ open, onClose, quote }: { open: boolean; onClose: () => void
     a.click();
   }
 
+  function openPdf() {
+    if (!url) return;
+    // Abre no visualizador do aparelho; se o navegador bloquear, baixa o arquivo.
+    if (!window.open(url, '_blank')) download();
+  }
+
   function print() {
     if (!url) return;
+    if (mobile) {
+      // No celular a impressão é feita pelo visualizador de PDF do sistema.
+      openPdf();
+      return;
+    }
     const frame = document.createElement('iframe');
     frame.style.position = 'fixed';
     frame.style.width = '0';
@@ -440,6 +456,7 @@ function PdfModal({ open, onClose, quote }: { open: boolean; onClose: () => void
       title={`Proposta ${quote.code} — versão ${quote.current.version}`}
       size="xl"
       footer={
+        mobile ? undefined : (
         <>
           <Button icon={<MessageCircle className="size-4" />} onClick={whatsapp} disabled={!blob}>
             WhatsApp
@@ -451,6 +468,7 @@ function PdfModal({ open, onClose, quote }: { open: boolean; onClose: () => void
             Baixar PDF
           </Button>
         </>
+        )
       }
     >
       <p className="mb-2 text-xs text-gray-500">
@@ -458,6 +476,25 @@ function PdfModal({ open, onClose, quote }: { open: boolean; onClose: () => void
       </p>
       {busy || !url ? (
         <Spinner label="Gerando PDF…" />
+      ) : mobile ? (
+        <div className="rounded-lg border border-gray-200 bg-gray-50 p-5 text-center">
+          <FileText className="mx-auto size-10 text-brand-700" strokeWidth={1.5} />
+          <p className="mt-2 text-sm font-medium text-gray-900">{fileName}</p>
+          <p className="text-xs text-gray-500">
+            {quote.current.document.project.name} · {formatBRL(quote.current.totals.finalPrice)} · {Math.max(1, Math.round((blob?.size ?? 0) / 1024))} KB
+          </p>
+          <div className="mt-4 grid gap-2">
+            <Button variant="primary" icon={<ExternalLink className="size-4" />} onClick={openPdf}>
+              Abrir e visualizar PDF
+            </Button>
+            <Button icon={<MessageCircle className="size-4" />} onClick={whatsapp} disabled={!blob}>
+              Enviar pelo WhatsApp / compartilhar
+            </Button>
+            <Button icon={<Download className="size-4" />} onClick={download}>
+              Baixar PDF
+            </Button>
+          </div>
+        </div>
       ) : (
         <object data={url} type="application/pdf" className="h-[70vh] w-full rounded border border-gray-200" aria-label="Pré-visualização do PDF">
           <div className="p-6 text-center text-sm text-gray-600">

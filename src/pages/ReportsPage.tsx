@@ -22,7 +22,7 @@ export function ReportsPage() {
             {monthly.length === 0 ? (
               <Empty title="Sem orçamentos para gerar relatórios" />
             ) : (
-              <table className="tbl">
+              <table className="tbl tbl-cards">
                 <thead>
                   <tr>
                     <th>Mês</th>
@@ -30,25 +30,29 @@ export function ReportsPage() {
                     <th className="text-right">Orçado</th>
                     <th className="text-right">Aprovados</th>
                     <th className="text-right">Faturamento aprovado</th>
-                    <th className="hidden text-right sm:table-cell">Margem bruta*</th>
+                    <th className="text-right">Margem bruta*</th>
                   </tr>
                 </thead>
                 <tbody>
                   {monthly.map((m) => (
                     <tr key={m.month}>
-                      <td className="whitespace-nowrap">{monthLabel(m.month)}</td>
+                      <td className="c-main whitespace-nowrap font-medium md:font-normal">{monthLabel(m.month)}</td>
                       <td className="num text-right">{m.created}</td>
                       <td className="num text-right">
-                        {formatBRL(m.quotedTotal)}
-                        <div className="ml-auto mt-1 h-1 rounded bg-gray-100" style={{ width: 96 }}>
-                          <div className="h-1 rounded bg-brand-500" style={{ width: `${(m.quotedTotal / max) * 100}%` }} />
+                        <div>
+                          {formatBRL(m.quotedTotal)}
+                          <div className="ml-auto mt-1 h-1 rounded bg-gray-100" style={{ width: 96 }}>
+                            <div className="h-1 rounded bg-brand-500" style={{ width: `${(m.quotedTotal / max) * 100}%` }} />
+                          </div>
                         </div>
                       </td>
                       <td className="num text-right">
-                        {m.approved} <span className="text-xs text-gray-500">({m.created ? Math.round((m.approved / m.created) * 100) : 0}%)</span>
+                        <span>
+                          {m.approved} <span className="text-xs text-gray-500">({m.created ? Math.round((m.approved / m.created) * 100) : 0}%)</span>
+                        </span>
                       </td>
                       <td className="num text-right font-medium">{formatBRL(m.approvedTotal)}</td>
-                      <td className="num hidden text-right sm:table-cell">{m.approvedTotal ? formatPct(roundPct(((m.approvedTotal - m.approvedCost) / m.approvedTotal) * 100)) : '—'}</td>
+                      <td className="num text-right">{m.approvedTotal ? formatPct(roundPct(((m.approvedTotal - m.approvedCost) / m.approvedTotal) * 100)) : '—'}</td>
                     </tr>
                   ))}
                 </tbody>

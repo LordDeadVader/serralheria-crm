@@ -33,7 +33,7 @@ export const Button = forwardRef<
       disabled={disabled || loading}
       className={cx(
         'inline-flex items-center justify-center gap-1.5 whitespace-nowrap rounded-md font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-50',
-        size === 'sm' ? 'h-8 px-2.5 text-[13px]' : 'h-9 px-3.5 text-sm',
+        size === 'sm' ? 'h-9 min-w-9 px-2.5 text-[13px] md:h-8 md:min-w-8' : 'h-10 px-3.5 text-sm md:h-9',
         VARIANTS[variant],
         className,
       )}
@@ -48,7 +48,7 @@ export const Button = forwardRef<
 /* ----------------------------- Formulários ---------------------------- */
 
 const inputCls =
-  'block w-full rounded-md border border-gray-300 bg-white px-2.5 py-1.5 text-sm text-gray-900 placeholder:text-gray-400 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-100 disabled:bg-gray-50 disabled:text-gray-500';
+  'block w-full rounded-md border border-gray-300 bg-white px-2.5 py-2 text-base text-gray-900 md:py-1.5 md:text-sm placeholder:text-gray-400 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-100 disabled:bg-gray-50 disabled:text-gray-500';
 
 export function Field({ label, error, hint, children, className, htmlFor }: { label?: string; error?: string; hint?: ReactNode; children: ReactNode; className?: string; htmlFor?: string }) {
   return (
@@ -112,7 +112,7 @@ export function Textarea({ label, error, wrapClass, className, id, ...p }: Texta
 export function Checkbox({ label, checked, onChange, hint }: { label: string; checked: boolean; onChange: (v: boolean) => void; hint?: string }) {
   return (
     <label className="flex cursor-pointer items-start gap-2 text-sm text-gray-800">
-      <input type="checkbox" className="mt-0.5 size-4 rounded border-gray-300 accent-brand-700" checked={checked} onChange={(e) => onChange(e.target.checked)} />
+      <input type="checkbox" className="mt-0.5 size-5 shrink-0 md:size-4 rounded border-gray-300 accent-brand-700" checked={checked} onChange={(e) => onChange(e.target.checked)} />
       <span>
         {label}
         {hint && <span className="block text-xs text-gray-500">{hint}</span>}
@@ -228,13 +228,13 @@ export function Modal({ open, onClose, title, children, footer, size = 'md' }: {
     <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-gray-900/40 p-0 sm:p-6" role="dialog" aria-modal="true" aria-label={title}>
       <div className={cx('flex min-h-full w-full flex-col bg-white sm:min-h-0 sm:rounded-lg sm:border sm:border-gray-200', w)}>
         <header className="sticky top-0 z-10 flex items-center justify-between border-b border-gray-200 bg-white px-5 py-3 sm:rounded-t-lg">
-          <h2 className="text-base font-semibold text-gray-900">{title}</h2>
-          <button className="rounded p-1 text-gray-500 hover:bg-gray-100" onClick={onClose} aria-label="Fechar">
-            <X className="size-4" />
+          <h2 className="min-w-0 truncate text-base font-semibold text-gray-900">{title}</h2>
+          <button className="-mr-2 rounded p-2 text-gray-500 hover:bg-gray-100" onClick={onClose} aria-label="Fechar">
+            <X className="size-5 md:size-4" />
           </button>
         </header>
-        <div className="flex-1 px-5 py-4">{children}</div>
-        {footer && <footer className="sticky bottom-0 flex flex-wrap justify-end gap-2 border-t border-gray-200 bg-gray-50 px-5 py-3 sm:rounded-b-lg">{footer}</footer>}
+        <div className="flex-1 px-4 py-4 sm:px-5">{children}</div>
+        {footer && <footer className="safe-bottom sticky bottom-0 flex flex-wrap justify-end gap-2 border-t border-gray-200 bg-gray-50 px-4 pt-3 sm:rounded-b-lg sm:px-5 sm:pb-3 [&>button]:flex-1 sm:[&>button]:flex-none">{footer}</footer>}
       </div>
     </div>
   );
@@ -246,13 +246,13 @@ export function SearchInput({ value, onChange, placeholder = 'Pesquisar…' }: {
 
 export function Segmented<T extends string>({ value, options, onChange }: { value: T; options: Array<{ value: T; label: ReactNode }>; onChange: (v: T) => void }) {
   return (
-    <div className="inline-flex rounded-md border border-gray-300 bg-white p-0.5">
+    <div className="flex rounded-md border border-gray-300 bg-white p-0.5 md:inline-flex">
       {options.map((o) => (
         <button
           key={o.value}
           type="button"
           onClick={() => onChange(o.value)}
-          className={cx('inline-flex items-center gap-1.5 rounded px-2.5 py-1 text-[13px] font-medium', value === o.value ? 'bg-gray-900 text-white' : 'text-gray-600 hover:text-gray-900')}
+          className={cx('inline-flex flex-1 items-center justify-center gap-1.5 rounded px-2.5 py-1.5 text-[13px] font-medium md:flex-none md:py-1', value === o.value ? 'bg-gray-900 text-white' : 'text-gray-600 hover:text-gray-900')}
         >
           {o.label}
         </button>

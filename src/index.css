@@ -13,10 +13,11 @@
 }
 
 @layer base {
-  html { -webkit-text-size-adjust: 100%; }
-  body { @apply bg-gray-50 text-gray-900 antialiased; font-feature-settings: 'cv11', 'ss01'; }
+  html { -webkit-text-size-adjust: 100%; -webkit-tap-highlight-color: transparent; }
+  body { @apply bg-gray-50 text-gray-900 antialiased; font-feature-settings: 'cv11', 'ss01'; overscroll-behavior-y: none; }
   input[type='number']::-webkit-inner-spin-button { opacity: 0.4; }
   :focus-visible { outline: 2px solid var(--color-brand-500); outline-offset: 1px; }
+  button, a, select, label { touch-action: manipulation; }
 }
 
 @layer components {
@@ -25,4 +26,46 @@
   .tbl td { @apply border-b border-gray-100 px-3 py-2.5 align-middle; }
   .tbl tbody tr:hover { @apply bg-gray-50/70; }
   .num { font-variant-numeric: tabular-nums; }
+
+  /*
+   * Tabelas em formato de cartão no celular (< 768px).
+   * Cada linha vira um cartão; cada célula vira "rótulo ........ valor".
+   * O rótulo vem do cabeçalho da coluna (data-label, preenchido por lib/cardTables).
+   *  .c-main     → título do cartão (linha inteira, sem rótulo)
+   *  .c-side     → fica ao lado do título (ex.: valor ou status)
+   *  .c-actions  → botões, alinhados à direita no rodapé do cartão
+   *  .c-full     → campo editável ocupando a largura toda, rótulo acima
+   */
+  @media (max-width: 767.98px) {
+    .tbl-cards { display: block; min-width: 0 !important; }
+    .tbl-cards thead { display: none; }
+    .tbl-cards tbody, .tbl-cards tfoot { display: block; }
+    .tbl-cards tr { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 12px; padding: 12px 14px; border-bottom: 1px solid var(--color-gray-200); }
+    .tbl-cards tbody tr:hover { background: transparent; }
+    .tbl-cards td { display: flex; width: 100%; align-items: center; justify-content: space-between; gap: 12px; padding: 0; border: 0; text-align: right; min-height: 22px; }
+    .tbl-cards td:empty { display: none; }
+    .tbl-cards td[data-label]::before { content: attr(data-label); flex: 0 0 auto; max-width: 42%; text-align: left; font-size: 12px; line-height: 1.3; color: var(--color-gray-500); }
+    .tbl-cards td > * { min-width: 0; }
+    .tbl-cards td[data-label] > :last-child:not(:first-child),
+    .tbl-cards td[data-label] > :only-child { margin-left: auto; }
+    .tbl-cards td:has(input, select, textarea)[data-label] > * { flex: 1 1 0; max-width: 58%; }
+    .tbl-cards td.c-main { display: block; flex: 1 1 0; width: auto; order: -2; text-align: left; }
+    .tbl-cards td.c-main::before, .tbl-cards td.c-actions::before { content: none; }
+    .tbl-cards td.c-side { width: auto; flex: 0 0 auto; order: -1; }
+    .tbl-cards td.c-side::before { content: none; }
+    .tbl-cards td.c-actions { order: 10; justify-content: flex-end; }
+    .tbl-cards td.c-full { display: block; text-align: left; }
+    .tbl-cards td.c-full[data-label]::before { display: block; max-width: none; margin-bottom: 4px; }
+    .tbl-cards td.c-full > * { max-width: none !important; }
+    .tbl-cards td.c-half { display: block; width: calc(50% - 6px); text-align: left; }
+    .tbl-cards td.c-half[data-label]::before { display: block; max-width: none; margin-bottom: 4px; }
+    .tbl-cards td.c-half > * { max-width: none !important; }
+    .tbl-cards td.c-grow { width: auto; flex: 1 1 0; }
+    .tbl-cards td.c-grow + td.c-actions, .tbl-cards td.c-actions.c-inline { width: auto; flex: 0 0 auto; }
+    .tbl-cards tfoot tr { background: var(--color-gray-50); }
+    .tbl-cards tfoot td { justify-content: flex-end; }
+  }
 }
+
+/* Barra fixa inferior respeitando a área segura de iPhones com notch. */
+.safe-bottom { padding-bottom: max(0.75rem, env(safe-area-inset-bottom)); }

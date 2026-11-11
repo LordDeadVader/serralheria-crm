@@ -87,13 +87,13 @@ export function QuoteTable({ rows }: { rows: QuoteSummary[] }) {
   const today = todayIso();
   return (
     <TableWrap>
-      <table className="tbl">
+      <table className="tbl tbl-cards">
         <thead>
           <tr>
             <th>Número</th>
             <th>Cliente / projeto</th>
             <th>Status</th>
-            <th className="hidden md:table-cell">Próximo retorno</th>
+            <th>Próximo retorno</th>
             <th className="hidden lg:table-cell">Atualizado</th>
             <th className="text-right">Valor</th>
           </tr>
@@ -101,22 +101,26 @@ export function QuoteTable({ rows }: { rows: QuoteSummary[] }) {
         <tbody>
           {rows.map((r) => (
             <tr key={r.id}>
-              <td className="whitespace-nowrap">
+              <td className="c-main whitespace-nowrap">
                 <Link className="font-medium text-brand-700 hover:underline" to={`/orcamentos/${r.id}`}>
                   {r.code}
                 </Link>
                 <span className="ml-1 text-xs text-gray-400">v{r.currentVersion}</span>
               </td>
               <td>
-                <p className="font-medium text-gray-900">{r.clientName}</p>
-                <p className="text-xs text-gray-500">{r.title}</p>
+                <div className="min-w-0">
+                  <Link to={`/orcamentos/${r.id}`} className="block font-medium text-gray-900">
+                    {r.clientName}
+                  </Link>
+                  <p className="text-xs text-gray-500">{r.title}</p>
+                </div>
               </td>
-              <td>
+              <td className="c-side">
                 <StatusBadge status={r.status} />
               </td>
-              <td className={cx('hidden md:table-cell', r.nextFollowupAt && r.nextFollowupAt < today ? 'font-medium text-red-700' : 'text-gray-600')}>{formatDate(r.nextFollowupAt)}</td>
+              <td className={cx(!r.nextFollowupAt && 'max-md:hidden', r.nextFollowupAt && r.nextFollowupAt < today ? 'font-medium text-red-700' : 'text-gray-600')}>{formatDate(r.nextFollowupAt)}</td>
               <td className="hidden text-gray-500 lg:table-cell">{formatDate(r.updatedAt)}</td>
-              <td className="num text-right font-medium">{formatBRL(r.total)}</td>
+              <td className="num text-right font-semibold md:font-medium">{formatBRL(r.total)}</td>
             </tr>
           ))}
         </tbody>
@@ -148,14 +152,15 @@ export function Kanban({ rows, statuses }: { rows: QuoteSummary[]; statuses: Quo
   }
 
   return (
-    <div className="overflow-x-auto pb-2">
+    <div className="-mx-4 snap-x snap-mandatory overflow-x-auto scroll-px-4 px-4 pb-2 sm:mx-0 sm:px-0">
+      <p className="mb-2 text-xs text-gray-500 md:hidden">Deslize para o lado para ver as outras colunas. Use “Mover para” para mudar o status.</p>
       <div className="flex min-w-max gap-3">
         {statuses.map((s) => {
           const items = rows.filter((r) => r.status === s);
           return (
             <section
               key={s}
-              className="flex w-64 shrink-0 flex-col rounded-lg border border-gray-200 bg-gray-100/60"
+              className="flex w-[82vw] max-w-72 shrink-0 snap-start flex-col rounded-lg border border-gray-200 bg-gray-100/60 sm:w-64"
               onDragOver={(e) => e.preventDefault()}
               onDrop={() => dragging && void move(dragging, s)}
               aria-label={STATUS_LABEL[s]}
@@ -168,13 +173,13 @@ export function Kanban({ rows, statuses }: { rows: QuoteSummary[]; statuses: Quo
               </header>
               <div className="flex-1 space-y-2 px-2 pb-2">
                 {items.map((r) => (
+                  <div key={r.id} className="rounded-md border border-gray-200 bg-white hover:border-brand-200">
                   <Link
-                    key={r.id}
                     to={`/orcamentos/${r.id}`}
                     draggable
                     onDragStart={() => setDragging(r.id)}
                     onDragEnd={() => setDragging(null)}
-                    className="block rounded-md border border-gray-200 bg-white p-2.5 text-sm hover:border-brand-200"
+                    className="block p-2.5 text-sm"
                   >
                     <div className="flex items-center justify-between gap-2">
                       <span className="text-xs font-medium text-brand-700">{r.code}</span>
@@ -184,8 +189,31 @@ export function Kanban({ rows, statuses }: { rows: QuoteSummary[]; statuses: Quo
                     <p className="truncate text-xs text-gray-500">{r.title}</p>
                     {r.nextFollowupAt && <p className="mt-1 text-[11px] text-gray-500">Retorno {formatDate(r.nextFollowupAt)}</p>}
                   </Link>
+                  <div className="border-t border-gray-100 px-2.5 py-2 md:hidden">
+                    <select
+                      value=""
+                      aria-label={`Mover ${r.code} para outro status`}
+                      className="w-full rounded border border-gray-300 bg-white px-2 py-1.5 text-base text-gray-700"
+                      onChange={(e) => e.target.value && void move(r.id, e.target.value as QuoteStatus)}
+                    >
+                      <option value="">Mover para…</option>
+                      {statuses
+                        .filter((x) => x !== r.status)
+                        .map((x) => (
+                          <option key={x} value={x}>
+                            {STATUS_LABEL[x]}
+                          </option>
+                        ))}
+                    </select>
+                  </div>
+                  </div>
                 ))}
-                {items.length === 0 && <p className="px-1 py-4 text-center text-xs text-gray-400">Arraste orçamentos para cá</p>}
+                {items.length === 0 && (
+                  <p className="px-1 py-4 text-center text-xs text-gray-400">
+                    <span className="hidden md:inline">Arraste orçamentos para cá</span>
+                    <span className="md:hidden">Nenhum orçamento</span>
+                  </p>
+                )}
               </div>
             </section>
           );

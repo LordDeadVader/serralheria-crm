@@ -167,7 +167,7 @@ export function MaterialsStep({ doc, update, errors, calc, company }: StepProps)
         <Empty title="Nenhum material adicionado">Selecione materiais do cadastro. O custo por unidade de uso é calculado automaticamente a partir do preço de compra.</Empty>
       ) : (
         <div className="overflow-x-auto">
-          <table className="tbl min-w-[760px]">
+          <table className="tbl tbl-cards md:min-w-[760px]">
             <thead>
               <tr>
                 <th>Material</th>
@@ -182,13 +182,13 @@ export function MaterialsStep({ doc, update, errors, calc, company }: StepProps)
             <tbody>
               {doc.materials.map((l, i) => (
                 <tr key={l.key}>
-                  <td>
+                  <td className="c-full">
                     <Input value={l.name} onChange={(e) => update((d) => void (d.materials[i].name = e.target.value))} error={errors[`materials.${i}.name`]} aria-label="Material" />
                   </td>
-                  <td>
+                  <td className="c-half">
                     <NumInput ariaLabel="Quantidade" value={l.qty} onChange={(n) => update((d) => void (d.materials[i].qty = n ?? 0))} />
                   </td>
-                  <td>
+                  <td className="c-half">
                     <Select value={l.unit} onChange={(e) => update((d) => void (d.materials[i].unit = e.target.value as Unit))} aria-label="Unidade" disabled={!!l.materialId}>
                       {UNITS.map((u) => (
                         <option key={u} value={u}>
@@ -197,25 +197,27 @@ export function MaterialsStep({ doc, update, errors, calc, company }: StepProps)
                       ))}
                     </Select>
                   </td>
-                  <td>
+                  <td className="c-half">
                     <NumInput ariaLabel="Custo unitário" value={l.unitCost} onChange={(n) => update((d) => void (d.materials[i].unitCost = n ?? 0))} />
                   </td>
-                  <td>
+                  <td className="c-half">
                     <NumInput ariaLabel="Desperdício" value={l.wastePct} onChange={(n) => update((d) => void (d.materials[i].wastePct = n ?? 0))} error={errors[`materials.${i}.wastePct`]} />
                   </td>
-                  <td className="num text-right">
-                    {formatBRL(calc.materialLines[i]?.total ?? 0)}
-                    {(calc.materialLines[i]?.waste ?? 0) > 0 && <span className="block text-[11px] text-gray-500">+{formatBRL(calc.materialLines[i].waste)} desp.</span>}
+                  <td className="c-grow num text-right font-medium md:font-normal">
+                    <div>
+                      {formatBRL(calc.materialLines[i]?.total ?? 0)}
+                      {(calc.materialLines[i]?.waste ?? 0) > 0 && <span className="block text-[11px] font-normal text-gray-500">+{formatBRL(calc.materialLines[i].waste)} desp.</span>}
+                    </div>
                   </td>
-                  <td>
-                    <Button size="sm" variant="ghost" title="Remover" onClick={() => update((d) => void d.materials.splice(i, 1))} icon={<Trash2 className="size-3.5 text-red-600" />} />
+                  <td className="c-actions">
+                    <Button size="sm" variant="ghost" title="Remover" aria-label="Remover material" onClick={() => update((d) => void d.materials.splice(i, 1))} icon={<Trash2 className="size-3.5 text-red-600" />} />
                   </td>
                 </tr>
               ))}
             </tbody>
             <tfoot>
               <tr>
-                <td colSpan={5} className="text-right text-[13px] text-gray-600">
+                <td colSpan={5} className="text-right text-[13px] text-gray-600 max-md:block">
                   Materiais {formatBRL(calc.materialsCost)} + desperdício {formatBRL(calc.wasteCost)}
                   {doc.project.quantity !== 1 && ` (× ${formatNumber(doc.project.quantity)} unidades)`}
                 </td>
@@ -280,7 +282,7 @@ export function LaborStep({ doc, update, errors, calc, company }: StepProps) {
         <Empty title="Nenhum serviço adicionado">Ex.: 4 horas de soldagem × R$ 35,00 = R$ 140,00.</Empty>
       ) : (
         <div className="overflow-x-auto">
-          <table className="tbl min-w-[680px]">
+          <table className="tbl tbl-cards md:min-w-[680px]">
             <thead>
               <tr>
                 <th>Serviço</th>
@@ -294,31 +296,31 @@ export function LaborStep({ doc, update, errors, calc, company }: StepProps) {
             <tbody>
               {doc.labor.map((l, i) => (
                 <tr key={l.key}>
-                  <td>
+                  <td className="c-full">
                     <Input value={l.name} onChange={(e) => update((d) => void (d.labor[i].name = e.target.value))} error={errors[`labor.${i}.name`]} aria-label="Serviço" />
                   </td>
-                  <td>
+                  <td className="c-full">
                     <Select value={l.mode} onChange={(e) => update((d) => void (d.labor[i].mode = e.target.value as 'hour' | 'fixed'))} aria-label="Cobrança">
                       <option value="hour">Por hora</option>
                       <option value="fixed">Preço fixo</option>
                     </Select>
                   </td>
-                  <td>
+                  <td className="c-half">
                     <NumInput ariaLabel="Quantidade" value={l.qty} onChange={(n) => update((d) => void (d.labor[i].qty = n ?? 0))} suffix={l.mode === 'hour' ? 'h' : ''} />
                   </td>
-                  <td>
+                  <td className="c-half">
                     <NumInput ariaLabel="Valor" value={l.rate} onChange={(n) => update((d) => void (d.labor[i].rate = n ?? 0))} />
                   </td>
-                  <td className="num text-right">{formatBRL(calc.laborLines[i] ?? 0)}</td>
-                  <td>
-                    <Button size="sm" variant="ghost" title="Remover" onClick={() => update((d) => void d.labor.splice(i, 1))} icon={<Trash2 className="size-3.5 text-red-600" />} />
+                  <td className="c-grow num text-right font-medium md:font-normal">{formatBRL(calc.laborLines[i] ?? 0)}</td>
+                  <td className="c-actions">
+                    <Button size="sm" variant="ghost" title="Remover" aria-label="Remover serviço" onClick={() => update((d) => void d.labor.splice(i, 1))} icon={<Trash2 className="size-3.5 text-red-600" />} />
                   </td>
                 </tr>
               ))}
             </tbody>
             <tfoot>
               <tr>
-                <td colSpan={4} className="text-right text-[13px] text-gray-600">
+                <td colSpan={4} className="text-right text-[13px] text-gray-600 max-md:block">
                   Total de mão de obra{doc.project.quantity !== 1 && ` (× ${formatNumber(doc.project.quantity)} unidades)`}
                 </td>
                 <td className="num text-right font-semibold">{formatBRL(calc.laborCost)}</td>
@@ -368,7 +370,7 @@ export function ExtrasStep({ doc, update, errors, calc }: StepProps) {
           <Empty title="Nenhuma despesa adicional">Frete, deslocamento, aluguel de equipamento, ART etc.</Empty>
         ) : (
           <div className="overflow-x-auto">
-            <table className="tbl min-w-[560px]">
+            <table className="tbl tbl-cards md:min-w-[560px]">
               <thead>
                 <tr>
                   <th>Descrição</th>
@@ -380,10 +382,10 @@ export function ExtrasStep({ doc, update, errors, calc }: StepProps) {
               <tbody>
                 {doc.extras.map((x, i) => (
                   <tr key={x.key}>
-                    <td>
+                    <td className="c-full">
                       <Input value={x.description} onChange={(e) => update((d) => void (d.extras[i].description = e.target.value))} error={errors[`extras.${i}.description`]} aria-label="Descrição" />
                     </td>
-                    <td>
+                    <td className="c-half">
                       <Select value={x.kind} onChange={(e) => update((d) => void (d.extras[i].kind = e.target.value as keyof typeof KIND_LABEL))} aria-label="Tipo">
                         {Object.entries(KIND_LABEL).map(([k, v]) => (
                           <option key={k} value={k}>
@@ -392,11 +394,11 @@ export function ExtrasStep({ doc, update, errors, calc }: StepProps) {
                         ))}
                       </Select>
                     </td>
-                    <td>
+                    <td className="c-half">
                       <NumInput ariaLabel="Valor" value={x.amount} onChange={(n) => update((d) => void (d.extras[i].amount = n ?? 0))} />
                     </td>
-                    <td>
-                      <Button size="sm" variant="ghost" title="Remover" onClick={() => update((d) => void d.extras.splice(i, 1))} icon={<Trash2 className="size-3.5 text-red-600" />} />
+                    <td className="c-actions">
+                      <Button size="sm" variant="ghost" title="Remover" aria-label="Remover despesa" onClick={() => update((d) => void d.extras.splice(i, 1))} icon={<Trash2 className="size-3.5 text-red-600" />} />
                     </td>
                   </tr>
                 ))}

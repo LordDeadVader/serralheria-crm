@@ -64,33 +64,33 @@ export function ClientsPage() {
         </TableWrap>
       ) : (
         <TableWrap>
-          <table className="tbl">
+          <table className="tbl tbl-cards">
             <thead>
               <tr>
                 <th>Nome</th>
-                <th className="hidden md:table-cell">Documento</th>
-                <th className="hidden sm:table-cell">Contato</th>
-                <th className="hidden lg:table-cell">Cidade</th>
+                <th className="md:hidden lg:table-cell">Documento</th>
+                <th>Contato</th>
+                <th className="md:hidden lg:table-cell">Cidade</th>
                 <th className="text-right">Orçamentos</th>
-                <th className="hidden text-right md:table-cell">Aprovado</th>
+                <th className="text-right">Aprovado</th>
                 <th className="w-px" />
               </tr>
             </thead>
             <tbody>
               {list.data.map((c) => (
                 <tr key={c.id}>
-                  <td>
+                  <td className="c-main">
                     <Link to={`/clientes/${c.id}`} className="font-medium text-gray-900 hover:text-brand-700 hover:underline">
                       {c.name}
                     </Link>
                     <span className="ml-2 text-xs text-gray-400">{c.personType}</span>
                   </td>
-                  <td className="hidden text-gray-600 md:table-cell">{c.document || '—'}</td>
-                  <td className="hidden text-gray-600 sm:table-cell">{c.whatsapp || c.phone || c.email || '—'}</td>
-                  <td className="hidden text-gray-600 lg:table-cell">{[c.city, c.state].filter(Boolean).join('/') || '—'}</td>
+                  <td className="text-gray-600 md:hidden lg:table-cell">{c.document || '—'}</td>
+                  <td className="text-gray-600">{c.whatsapp || c.phone || c.email || '—'}</td>
+                  <td className="text-gray-600 md:hidden lg:table-cell">{[c.city, c.state].filter(Boolean).join('/') || '—'}</td>
                   <td className="num text-right">{c.quoteCount ?? 0}</td>
-                  <td className="num hidden text-right md:table-cell">{formatBRL(c.approvedTotal)}</td>
-                  <td>
+                  <td className="num text-right">{formatBRL(c.approvedTotal)}</td>
+                  <td className="c-actions">
                     <div className="flex justify-end gap-1">
                       <Button size="sm" variant="ghost" title="Editar" onClick={() => setEditing(c)} icon={<Pencil className="size-3.5" />} />
                       {archived === 'ativos' ? (

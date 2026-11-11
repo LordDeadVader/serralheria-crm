@@ -75,23 +75,25 @@ export function DashboardPage() {
             <Empty title="Nenhum orçamento ainda" action={<Button onClick={() => nav('/orcamentos/novo')}>Criar o primeiro</Button>} />
           ) : (
             <div className="overflow-x-auto">
-              <table className="tbl">
+              <table className="tbl tbl-cards">
                 <tbody>
                   {recent.map((r) => (
                     <tr key={r.id}>
-                      <td className="whitespace-nowrap">
+                      <td className="c-main whitespace-nowrap">
                         <Link className="font-medium text-brand-700 hover:underline" to={`/orcamentos/${r.id}`}>
                           {r.code}
                         </Link>
                       </td>
-                      <td>
-                        <p className="font-medium">{r.clientName}</p>
-                        <p className="text-xs text-gray-500">{r.title}</p>
+                      <td className="max-md:order-1 max-md:!w-auto max-md:flex-1 max-md:!justify-start max-md:!text-left">
+                        <div className="min-w-0">
+                          <p className="font-medium">{r.clientName}</p>
+                          <p className="text-xs text-gray-500">{r.title}</p>
+                        </div>
                       </td>
-                      <td>
+                      <td className="c-side">
                         <StatusBadge status={r.status} />
                       </td>
-                      <td className="num text-right font-medium">{formatBRL(r.total)}</td>
+                      <td className="num text-right font-medium max-md:order-2 max-md:!w-auto">{formatBRL(r.total)}</td>
                     </tr>
                   ))}
                 </tbody>
