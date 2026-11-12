@@ -166,3 +166,15 @@ npm run company:delete -- --remote --email dono@empresa.com --confirm
 ## Dados de demonstração
 
 Cada nova empresa recebe 8 materiais e 4 serviços marcados como **Exemplo**, com preços apenas ilustrativos (não são referência de mercado). Podem ser editados ou excluídos e não são compartilhados entre empresas.
+
+## Lista padrão de insumos, serviços e modelos
+
+A lista de materiais/insumos, mão de obra e os modelos/kits predefinidos ficam em
+`scripts/presets/lista.txt` e `scripts/presets/generate.py`. Para alterar:
+
+```bash
+python scripts/presets/generate.py
+```
+
+Isso regenera `src/data/presets.ts` (usado no cadastro de novas empresas e no botão
+**Importar lista padrão**) e `scripts/presets/presets.sql`. Os itens entram **sem preço**.

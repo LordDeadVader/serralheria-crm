@@ -22,9 +22,34 @@ export const laborLineSchema = z.object({
   serviceId: z.string().max(40).nullable(),
   name: z.string().trim().min(1, 'Informe o serviço').max(160),
   mode: z.enum(['hour', 'fixed']),
+  /** hour: horas por funcionário; fixed: sempre 1 (o valor é o preço do serviço). */
   qty,
+  /** Funcionários trabalhando ao mesmo tempo (só no modo por hora). */
+  workers: z.coerce.number().int().min(1, 'Mínimo 1 funcionário').max(100).default(1),
   rate: money,
 });
+
+/** Deslocamento até a obra: combustível, pedágios, alimentação e estadia da equipe. */
+export const travelSchema = z.object({
+  enabled: z.boolean().default(false),
+  origin: str(300),
+  destination: str(300),
+  /** Distância de ida, em km. */
+  distanceKm: z.coerce.number().min(0).max(20_000).default(0),
+  /** Quantas viagens de ida e volta. */
+  trips: z.coerce.number().int().min(0).max(365).default(1),
+  kmPerLiter: z.coerce.number().min(0).max(100).default(10),
+  fuelPrice: money.default(0),
+  /** Pedágios de uma viagem completa (ida + volta). */
+  tollPerTrip: money.default(0),
+  workers: z.coerce.number().int().min(0).max(100).default(1),
+  days: z.coerce.number().int().min(0).max(365).default(1),
+  mealPerPersonDay: money.default(0),
+  nights: z.coerce.number().int().min(0).max(365).default(0),
+  lodgingPerPersonNight: money.default(0),
+});
+export type Travel = z.infer<typeof travelSchema>;
+export const emptyTravel = (): Travel => travelSchema.parse({});
 
 export const extraLineSchema = z.object({
   key,
@@ -52,6 +77,7 @@ export const quoteDocumentSchema = z.object({
   materials: z.array(materialLineSchema).max(300),
   labor: z.array(laborLineSchema).max(100),
   extras: z.array(extraLineSchema).max(100),
+  travel: travelSchema.default(emptyTravel),
   pricing: z.object({
     overheadPct: pct,
     taxPct: pct,

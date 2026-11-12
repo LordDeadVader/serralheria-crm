@@ -57,8 +57,18 @@ const me = await call('GET', '/auth/me', A);
 ok(me.data?.company?.name?.startsWith('Empresa Teste A'), 'sessão retorna a empresa correta');
 
 console.log('2. Cadastros');
-const demo = await call('GET', '/materials', A);
-ok(demo.data.length >= 8 && demo.data.every((m) => m.isDemo), 'materiais de exemplo criados e identificados');
+const preset = await call('GET', '/materials', A);
+ok(preset.data.length >= 400 && preset.data.every((m) => m.purchasePrice === 0), `lista padrão de materiais criada sem preços (${preset.data.length})`);
+const presetSvc = await call('GET', '/services', A);
+ok(presetSvc.data.length >= 90, `lista padrão de serviços criada (${presetSvc.data.length})`);
+const tpls = await call('GET', '/templates', A);
+ok(tpls.data.length >= 12 && tpls.data.some((t) => t.name === 'Testeira em ACM adesivada' && t.materials.length > 0), 'modelos e kits predefinidos criados');
+const reimport = await call('POST', '/presets/import', A);
+ok(reimport.data?.materials === 0 && reimport.data?.services === 0 && reimport.data?.templates === 0, 'importar de novo não duplica nada');
+const newTpl = await call('POST', '/templates', A, { name: 'Kit teste', kind: 'kit', materials: [{ name: 'Item', unit: 'un', qty: 2 }], labor: [{ name: 'Montagem', mode: 'hour', qty: 1.5, workers: 2 }] });
+ok(newTpl.status === 201 && newTpl.data.labor[0].workers === 2, 'modelo criado');
+ok((await call('PUT', `/templates/${newTpl.data.id}`, B, { name: 'Invasão' })).status === 404, 'empresa B não altera modelo de A');
+ok(!(await call('GET', '/templates', B)).data.some((t) => t.id === newTpl.data.id), 'empresa B não vê modelo de A');
 const badClient = await call('POST', '/clients', A, { name: 'Z', personType: 'PF', document: '123' });
 ok(badClient.status === 422, 'validação no servidor (nome curto/CPF inválido)');
 const client = await call('POST', '/clients', A, { name: 'Cliente Teste', personType: 'PF', document: '529.982.247-25', phone: '(11) 90000-0000', city: 'São Paulo', state: 'SP' });
@@ -85,7 +95,7 @@ const doc = {
     { key: 'm2', materialId: mats[1].id, code: '', name: mats[1].name, unit: 'm2', qty: 1, unitCost: 150, wastePct: 5 },
     { key: 'm3', materialId: mats[2].id, code: '', name: mats[2].name, unit: 'un', qty: 1, unitCost: 80, wastePct: 0 },
   ],
-  labor: [{ key: 'l1', serviceId: svc.data.id, name: 'Soldagem', mode: 'hour', qty: 4, rate: 35 }],
+  labor: [{ key: 'l1', serviceId: svc.data.id, name: 'Soldagem', mode: 'hour', qty: 4, workers: 1, rate: 35 }],
   extras: [{ key: 'e1', description: 'Frete', kind: 'transporte', amount: 50 }],
   pricing: { overheadPct: 10, taxPct: 6, feePct: 2, commissionPct: 0, marginPct: 25, manualPrice: null },
   commercial: { validityDays: 15, paymentTerms: '50% entrada', downPaymentPct: 50, installments: 2, fabricationDays: 10, installationDays: 1, warranty: '12 meses', notes: '', responsible: 'Usuário A', showItemized: true },

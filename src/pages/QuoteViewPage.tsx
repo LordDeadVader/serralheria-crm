@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { ArrowLeft, Copy, Download, ExternalLink, FileText, GitBranch, MessageCircle, Pencil, Printer, Trash2 } from 'lucide-react';
+import { ArrowLeft, BookmarkPlus, Copy, Download, ExternalLink, FileText, GitBranch, MessageCircle, Pencil, Printer, Trash2 } from 'lucide-react';
 import { useMediaQuery } from '../hooks/useMediaQuery';
 import { useAuth } from '../authentication/AuthContext';
 import { CostSummary } from '../components/CostSummary';
@@ -12,7 +12,9 @@ import { formatBRL, formatNumber, formatPct } from '../calculations/money';
 import { unitShort } from '../calculations/units';
 import { formatDate, formatDateTime, formatDuration } from '../lib/format';
 import { generateQuotePdf, pdfFileName } from '../pdf/generate';
-import { companyRepo, quotesRepo } from '../repositories';
+import { companyRepo, quotesRepo, templatesRepo } from '../repositories';
+import { documentToTemplate } from '../lib/applyTemplate';
+import { travelExtraLines } from '../calculations/travel';
 import { onlyDigits } from '../schemas/common';
 import { QUOTE_STATUSES, STATUS_LABEL, type QuoteDetail, type QuoteStatus } from '../types/domain';
 
@@ -82,6 +84,13 @@ function View({ quote, viewingVersion, setVersion }: { quote: QuoteDetail; viewi
     }
   }
 
+  async function saveAsTemplate() {
+    const name = window.prompt('Nome do modelo (ex.: Testeira em ACM adesivada):', doc.project.name);
+    if (!name || name.trim().length < 2) return;
+    const r = await run(() => templatesRepo.create(documentToTemplate(doc, name.trim())), `Modelo "${name.trim()}" criado. Ele aparece em "Começar a partir de um serviço predefinido".`);
+    if (r) await qc.invalidateQueries({ queryKey: ['templates'] });
+  }
+
   async function duplicate() {
     const r = await run(() => quotesRepo.duplicate(quote.id), 'Orçamento duplicado.');
     if (r) {
@@ -135,6 +144,9 @@ function View({ quote, viewingVersion, setVersion }: { quote: QuoteDetail; viewi
           )}
           <Button icon={<Copy className="size-4" />} onClick={duplicate}>
             Duplicar
+          </Button>
+          <Button icon={<BookmarkPlus className="size-4" />} onClick={saveAsTemplate} title="Criar um serviço predefinido a partir deste orçamento">
+            Salvar como modelo
           </Button>
           {['rascunho', 'em_elaboracao', 'cancelado'].includes(quote.status) && <Button variant="danger" icon={<Trash2 className="size-4" />} onClick={remove} title="Excluir" />}
         </div>
@@ -195,7 +207,7 @@ function View({ quote, viewingVersion, setVersion }: { quote: QuoteDetail; viewi
                   {doc.labor.map((l, i) => (
                     <tr key={l.key}>
                       <td className="c-main">{l.name}</td>
-                      <td className="num text-right">{l.mode === 'hour' ? formatDuration(l.qty) : formatNumber(l.qty)}</td>
+                      <td className="num text-right">{l.mode === 'hour' ? `${formatDuration(l.qty)}${(l.workers ?? 1) > 1 ? ` × ${l.workers} func.` : ''}` : 'preço fixo'}</td>
                       <td className="num text-right">{formatBRL(l.rate)}</td>
                       <td className="num text-right">{formatBRL(t.laborLines[i])}</td>
                     </tr>
@@ -204,6 +216,16 @@ function View({ quote, viewingVersion, setVersion }: { quote: QuoteDetail; viewi
                     <tr key={x.key}>
                       <td className="c-main">
                         {x.description} <span className="text-xs text-gray-500">({x.kind})</span>
+                      </td>
+                      <td />
+                      <td />
+                      <td className="num text-right">{formatBRL(x.amount)}</td>
+                    </tr>
+                  ))}
+                  {travelExtraLines(doc.travel).map((x) => (
+                    <tr key={x.description}>
+                      <td className="c-main">
+                        {x.description} <span className="text-xs text-gray-500">(deslocamento)</span>
                       </td>
                       <td />
                       <td />

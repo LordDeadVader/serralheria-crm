@@ -10,5 +10,5 @@
     "isolatedModules": true,
     "types": ["@cloudflare/workers-types"]
   },
-  "include": ["src", "../src/calculations", "../src/schemas", "../src/types"]
+  "include": ["src", "../src/calculations", "../src/schemas", "../src/types", "../src/data"]
 }

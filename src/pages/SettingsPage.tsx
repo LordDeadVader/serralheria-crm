@@ -40,7 +40,7 @@ export function SettingsPage() {
   useEffect(() => {
     if (company) {
       const { name, legalName, cnpj, address, phone, whatsapp, email, logo, settings } = company;
-      setF({ name, legalName, cnpj, address, phone, whatsapp, email, logo, settings: settings ?? defaultCompanySettings() });
+      setF({ name, legalName, cnpj, address, phone, whatsapp, email, logo, settings: { ...defaultCompanySettings(), ...settings, travel: { ...defaultCompanySettings().travel, ...settings?.travel } } });
     }
   }, [company]);
   if (!f) return null;
@@ -48,6 +48,8 @@ export function SettingsPage() {
   const set = <K extends keyof CompanyInput>(k: K, v: CompanyInput[K]) => setF({ ...f, [k]: v });
   const setFin = <K extends keyof CompanyInput['settings']['financial']>(k: K, v: number | null) =>
     setF({ ...f, settings: { ...f.settings, financial: { ...f.settings.financial, [k]: v ?? 0 } } });
+  const setTr = <K extends keyof CompanyInput['settings']['travel']>(k: K, v: number | null) =>
+    setF({ ...f, settings: { ...f.settings, travel: { ...(f.settings.travel ?? defaultCompanySettings().travel), [k]: v ?? 0 } } });
   const setQ = <K extends keyof CompanyInput['settings']['quote']>(k: K, v: CompanyInput['settings']['quote'][K]) =>
     setF({ ...f, settings: { ...f.settings, quote: { ...f.settings.quote, [k]: v } } });
 
@@ -81,6 +83,7 @@ export function SettingsPage() {
 
   const fin = f.settings.financial;
   const q = f.settings.quote;
+  const tr = f.settings.travel ?? defaultCompanySettings().travel;
   return (
     <>
       <PageHeader
@@ -151,11 +154,21 @@ export function SettingsPage() {
           </div>
         </Panel>
 
+        <Panel title="Deslocamento — padrões para o cálculo de viagem">
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+            <NumInput label="Consumo do veículo" suffix="km/l" value={tr.kmPerLiter} onChange={(n) => setTr('kmPerLiter', n)} />
+            <NumInput label="Preço do combustível" suffix="R$/l" value={tr.fuelPrice} onChange={(n) => setTr('fuelPrice', n)} />
+            <NumInput label="Alimentação por pessoa/dia" suffix="R$" value={tr.mealPerPersonDay} onChange={(n) => setTr('mealPerPersonDay', n)} />
+            <NumInput label="Hospedagem por pessoa/noite" suffix="R$" value={tr.lodgingPerPersonNight} onChange={(n) => setTr('lodgingPerPersonNight', n)} />
+          </div>
+          <p className="mt-2 text-xs text-gray-500">A cidade de saída é o endereço da empresa (acima). Os valores podem ser alterados em cada orçamento.</p>
+        </Panel>
+
         <Panel title="Orçamentos — padrões da proposta">
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-6">
             <Input label="Prefixo da numeração" value={q.numberPrefix} onChange={(e) => setQ('numberPrefix', e.target.value.toUpperCase())} hint="Ex.: ORC-2026-0001" />
             <NumInput label="Validade" suffix="dias" value={q.validityDays} onChange={(n) => setQ('validityDays', Math.round(n ?? 0))} />
-            <NumInput label="Fabricação" suffix="dias" value={q.fabricationDays} onChange={(n) => setQ('fabricationDays', Math.round(n ?? 0))} />
+            <NumInput label="Montagem" suffix="dias" value={q.fabricationDays} onChange={(n) => setQ('fabricationDays', Math.round(n ?? 0))} />
             <NumInput label="Instalação" suffix="dias" value={q.installationDays} onChange={(n) => setQ('installationDays', Math.round(n ?? 0))} />
             <NumInput label="Entrada" suffix="%" value={q.downPaymentPct} onChange={(n) => setQ('downPaymentPct', n ?? 0)} />
             <NumInput label="Parcelas" value={q.installments} onChange={(n) => setQ('installments', Math.round(n ?? 0))} />

@@ -170,7 +170,7 @@ export function QuotePdf({ company, client, code, version, issuedAt, doc, calc, 
           ) : (
             <View style={s.tRow}>
               <Text style={s.cDesc}>
-                {p.name} — fornecimento de materiais, fabricação{c.installationDays > 0 ? ' e instalação' : ''}, conforme especificações.
+                {p.name} — fornecimento de materiais, montagem{c.installationDays > 0 ? ' e instalação' : ''}, conforme especificações.
               </Text>
               <Text style={s.cQty}>{formatNumber(p.quantity)} un</Text>
               <Text style={s.cVal}>{formatBRL(calc.finalPrice)}</Text>
@@ -209,7 +209,7 @@ export function QuotePdf({ company, client, code, version, issuedAt, doc, calc, 
           <View style={s.col}>
             <Text style={s.h2}>Prazos e garantia</Text>
             <View style={s.grid}>
-              <Info label="Fabricação" value={`${c.fabricationDays} dia(s) após aprovação`} />
+              <Info label="Montagem" value={`${c.fabricationDays} dia(s) após aprovação`} />
               <Info label="Instalação" value={c.installationDays ? `${c.installationDays} dia(s)` : 'Não incluso'} />
               <Info label="Garantia" value={c.warranty} w="100%" />
             </View>

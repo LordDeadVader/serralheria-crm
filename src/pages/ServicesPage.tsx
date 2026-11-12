@@ -3,10 +3,11 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Pencil, Plus, Trash2 } from 'lucide-react';
 import { DemoBadge } from '../components/StatusBadge';
 import { NumInput } from '../components/NumInput';
+import { ImportPresetsButton } from '../components/ImportPresetsButton';
 import { DurationInput } from '../components/DurationInput';
 import { formatDuration } from '../lib/format';
 import { useFeedback } from '../components/feedback';
-import { Badge, Button, Empty, ErrorBox, Input, Modal, PageHeader, Select, Spinner, TableWrap, Textarea, cx } from '../components/ui';
+import { Badge, Button, Empty, ErrorBox, Input, Modal, PageHeader, SearchInput, Select, Spinner, TableWrap, Textarea, cx } from '../components/ui';
 import { formatBRL, roundMoney } from '../calculations/money';
 import { useForm } from '../hooks/useForm';
 import { servicesRepo } from '../repositories';
@@ -18,6 +19,8 @@ export function ServicesPage() {
   const fb = useFeedback();
   const qc = useQueryClient();
   const list = useQuery({ queryKey: ['services'], queryFn: servicesRepo.list });
+  const [q, setQ] = useState('');
+  const rows = (list.data ?? []).filter((s) => !q || `${s.name} ${s.category}`.toLowerCase().includes(q.toLowerCase()));
 
   async function remove(s: Service) {
     if (!(await fb.confirm({ title: 'Excluir serviço', message: `Excluir "${s.name}"? Orçamentos já salvos não são afetados.`, confirmLabel: 'Excluir', danger: true }))) return;
@@ -36,11 +39,17 @@ export function ServicesPage() {
         title="Serviços e mão de obra"
         subtitle="Custo por hora ou preço fixo, usados na composição dos orçamentos."
         actions={
-          <Button variant="primary" icon={<Plus className="size-4" />} onClick={() => setEditing(null)}>
-            Novo serviço
-          </Button>
+          <>
+            <ImportPresetsButton />
+            <Button variant="primary" icon={<Plus className="size-4" />} onClick={() => setEditing(null)}>
+              Novo serviço
+            </Button>
+          </>
         }
       />
+      <div className="mb-3">
+        <SearchInput value={q} onChange={setQ} placeholder="Nome ou categoria…" />
+      </div>
       {list.isLoading ? (
         <Spinner />
       ) : list.error ? (
@@ -64,7 +73,7 @@ export function ServicesPage() {
               </tr>
             </thead>
             <tbody>
-              {list.data.map((s) => (
+              {rows.map((s) => (
                 <tr key={s.id} className={s.status === 'inativo' ? 'opacity-60' : ''}>
                   <td className="c-main">
                     <div className="flex flex-wrap items-center gap-1.5">
@@ -75,7 +84,7 @@ export function ServicesPage() {
                   </td>
                   <td className="text-gray-600 md:hidden lg:table-cell">{s.category || '—'}</td>
                   <td className="text-gray-600">{s.mode === 'hour' ? 'Por hora' : `Preço fixo / ${s.unit}`}</td>
-                  <td className="num text-right">{s.mode === 'hour' ? `${formatBRL(s.hourlyCost)}/h` : formatBRL(s.fixedPrice)}</td>
+                  <td className="num text-right">{(s.mode === 'hour' ? s.hourlyCost : s.fixedPrice) > 0 ? (s.mode === 'hour' ? `${formatBRL(s.hourlyCost)}/h` : formatBRL(s.fixedPrice)) : <Badge tone="amber">Sem valor</Badge>}</td>
                   <td className={cx('num text-right', s.mode !== 'hour' && 'max-md:hidden')}>{s.mode === 'hour' ? formatDuration(s.estimatedHours) : '—'}</td>
                   <td className="num text-right">{formatBRL(s.mode === 'hour' ? roundMoney(s.hourlyCost * s.estimatedHours) : s.fixedPrice)}</td>
                   <td className="c-actions">

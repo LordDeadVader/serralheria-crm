@@ -24,9 +24,18 @@ export const quoteDefaultsSchema = z.object({
   responsible: str(120).default(''),
 });
 
+/** Padrões de deslocamento (preencha com os valores reais da sua região). */
+export const travelDefaultsSchema = z.object({
+  kmPerLiter: z.coerce.number().min(0).max(100).default(10),
+  fuelPrice: z.coerce.number().min(0).max(100).default(0),
+  mealPerPersonDay: z.coerce.number().min(0).max(10_000).default(0),
+  lodgingPerPersonNight: z.coerce.number().min(0).max(10_000).default(0),
+});
+
 export const companySettingsSchema = z.object({
   financial: financialDefaultsSchema.default(() => financialDefaultsSchema.parse({})),
   quote: quoteDefaultsSchema.default(() => quoteDefaultsSchema.parse({})),
+  travel: travelDefaultsSchema.default(() => travelDefaultsSchema.parse({})),
 });
 export type CompanySettings = z.infer<typeof companySettingsSchema>;
 export const defaultCompanySettings = (): CompanySettings => companySettingsSchema.parse({});

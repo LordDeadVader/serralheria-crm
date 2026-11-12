@@ -1,7 +1,8 @@
 /** Repositórios do frontend: encapsulam os endpoints da API por entidade. */
 import type { ClientInput, CompanyInput, MaterialInput, ServiceInput, StockItemInput, StockMovementInput, SupplierInput } from '../schemas/entities';
 import type { QuoteDocument } from '../schemas/quote';
-import type { Client, Company, Material, PriceHistory, QuoteDetail, QuoteStatus, QuoteSummary, Service, StockItem, StockMovement, Supplier, User } from '../types/domain';
+import type { Client, Company, Material, PriceHistory, QuoteDetail, QuoteStatus, QuoteSummary, Service, StockItem, StockMovement, Supplier, Template, User } from '../types/domain';
+import type { TemplateInput } from '../schemas/templates';
 import { del, get, post, put, qs } from '../services/api';
 
 export const authRepo = {
@@ -72,6 +73,17 @@ export const stockRepo = {
   remove: (id: string) => del<{ archived: boolean }>(`/stock/${id}`),
   movements: (id: string) => get<StockMovement[]>(`/stock/${id}/movements`),
   move: (id: string, d: StockMovementInput) => post<{ item: StockItem; movement: StockMovement }>(`/stock/${id}/movements`, d),
+};
+
+export const templatesRepo = {
+  list: () => get<Template[]>('/templates'),
+  create: (d: TemplateInput) => post<Template>('/templates', d),
+  update: (id: string, d: TemplateInput) => put<Template>(`/templates/${id}`, d),
+  remove: (id: string) => del(`/templates/${id}`),
+};
+
+export const presetsRepo = {
+  importAll: () => post<{ materials: number; services: number; templates: number }>('/presets/import'),
 };
 
 export interface DashboardData {

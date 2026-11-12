@@ -279,3 +279,21 @@ export const stockMovements = sqliteTable(
   },
   (t) => [index('stock_mov_item_idx').on(t.itemId, t.createdAt)],
 );
+
+/* --------------------------- Modelos e kits --------------------------- */
+
+/** Serviços predefinidos e kits de insumos. O conteúdo (linhas) fica em JSON validado por templateSchema. */
+export const templates = sqliteTable(
+  'templates',
+  {
+    id: text('id').primaryKey(),
+    companyId: text('company_id').notNull().references(() => companies.id),
+    name: text('name').notNull(),
+    kind: text('kind', { enum: ['projeto', 'kit'] }).notNull().default('projeto'),
+    data: text('data').notNull().default('{}'),
+    isDemo: integer('is_demo', { mode: 'boolean' }).notNull().default(false),
+    createdAt: text('created_at').notNull().default(now),
+    updatedAt: text('updated_at').notNull().default(now),
+  },
+  (t) => [index('templates_company_idx').on(t.companyId, t.kind, t.name)],
+);

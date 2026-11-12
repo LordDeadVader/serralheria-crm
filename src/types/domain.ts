@@ -27,6 +27,23 @@ export const STATUS_LABEL: Record<QuoteStatus, string> = {
 export const EDITABLE_STATUSES: QuoteStatus[] = ['rascunho', 'em_elaboracao'];
 
 export const MATERIAL_CATEGORIES = [
+  'ACM',
+  'Tubos galvanizados',
+  'Chapas galvanizadas',
+  'Chapas e perfis de alumínio',
+  'Acrílicos e plásticos',
+  'Adesivos e películas',
+  'Lonas e tecidos',
+  'Tintas e materiais de impressão',
+  'Colas, PU e fitas',
+  'Parafusos e fixadores',
+  'Solda e consumíveis',
+  'Pintura e proteção',
+  'Iluminação e elétrica',
+  'Estruturas e ferragens',
+  'Sinalização e acabamentos',
+  'Letras caixa e fachadas',
+  'Consumíveis gerais',
   'Perfis e tubos',
   'Cantoneiras e barras',
   'Chapas',
@@ -40,15 +57,17 @@ export const MATERIAL_CATEGORIES = [
 ] as const;
 
 export const SERVICE_CATEGORIES = [
-  'Fabricação',
+  'Montagem',
   'Soldagem',
   'Corte',
   'Desbaste',
-  'Montagem',
   'Pintura',
   'Acabamento',
   'Instalação',
   'Transporte',
+  'Serralheria',
+  'Comunicação visual',
+  'Serviços complementares',
   'Outros',
 ] as const;
 
@@ -235,3 +254,9 @@ export interface StockMovement {
   userName: string | null;
   createdAt: string;
 }
+
+export type Template = import('../schemas/templates').TemplateInput & {
+  id: string;
+  isDemo: boolean;
+  updatedAt: string;
+};

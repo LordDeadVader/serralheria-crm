@@ -2,9 +2,11 @@ import { useEffect, useMemo, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { History, Pencil, Plus, Trash2 } from 'lucide-react';
 import { DemoBadge } from '../components/StatusBadge';
+import { PurchaseFormat, detectFormat } from '../components/PurchaseFormat';
 import { NumInput } from '../components/NumInput';
 import { useFeedback } from '../components/feedback';
-import { Badge, Button, Empty, ErrorBox, Input, Modal, PageHeader, SearchInput, Select, Spinner, TableWrap, Textarea } from '../components/ui';
+import { Badge, Button, Empty, ErrorBox, Input, Modal, PageHeader, SearchInput, Segmented, Select, Spinner, TableWrap, Textarea } from '../components/ui';
+import { ImportPresetsButton } from '../components/ImportPresetsButton';
 import { formatBRL, formatNumber } from '../calculations/money';
 import { UNITS, UNIT_INFO, isCompatible, safeCostPerUsageUnit, unitShort, type Unit } from '../calculations/units';
 import { useForm } from '../hooks/useForm';
@@ -20,6 +22,9 @@ export function MaterialsPage() {
   const fb = useFeedback();
   const qc = useQueryClient();
   const list = useQuery({ queryKey: ['materials', q], queryFn: () => materialsRepo.list(q) });
+  const [only, setOnly] = useState<'todos' | 'sem'>('todos');
+  const noPrice = (list.data ?? []).filter((m) => !(m.purchasePrice > 0)).length;
+  const rows = only === 'sem' ? (list.data ?? []).filter((m) => !(m.purchasePrice > 0)) : (list.data ?? []);
 
   async function remove(m: Material) {
     const ok = await fb.confirm({
@@ -44,13 +49,17 @@ export function MaterialsPage() {
         title="Materiais"
         subtitle="Preço de compra, conversão para a unidade de uso e histórico de preços."
         actions={
-          <Button variant="primary" icon={<Plus className="size-4" />} onClick={() => setEditing(null)}>
-            Novo material
-          </Button>
+          <>
+            <ImportPresetsButton />
+            <Button variant="primary" icon={<Plus className="size-4" />} onClick={() => setEditing(null)}>
+              Novo material
+            </Button>
+          </>
         }
       />
-      <div className="mb-3">
+      <div className="mb-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         <SearchInput value={q} onChange={setQ} placeholder="Nome, código ou categoria…" />
+        <Segmented value={only} onChange={setOnly} options={[{ value: 'todos', label: 'Todos' }, { value: 'sem', label: `Sem preço${noPrice ? ` (${noPrice})` : ''}` }]} />
       </div>
       {list.data?.some((m) => m.isDemo) && (
         <p className="mb-3 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-[13px] text-amber-900">
@@ -80,7 +89,7 @@ export function MaterialsPage() {
               </tr>
             </thead>
             <tbody>
-              {list.data.map((m) => {
+              {rows.map((m) => {
                 const c = safeCostPerUsageUnit({ purchasePrice: m.purchasePrice, packQty: m.packQty, packUnit: m.packUnit, usageUnit: m.usageUnit, packWeightKg: m.weightKg });
                 return (
                   <tr key={m.id} className={m.status === 'inativo' ? 'opacity-60' : ''}>
@@ -96,7 +105,7 @@ export function MaterialsPage() {
                     <td className="text-gray-600 md:hidden lg:table-cell">{m.category || '—'}</td>
                     <td className="num text-right">
                       <div>
-                        {formatBRL(m.purchasePrice)}
+                        {m.purchasePrice > 0 ? formatBRL(m.purchasePrice) : <Badge tone="amber">Sem preço</Badge>}
                         <span className="block text-xs text-gray-500">
                           {m.purchaseUnit} · {formatNumber(m.packQty, 3)} {unitShort(m.packUnit)}
                         </span>
@@ -228,44 +237,57 @@ export function MaterialFormModal({ open, material, onClose, onSaved }: { open: 
         </Select>
 
         <div className="rounded-md border border-gray-200 bg-gray-50 p-3 sm:col-span-6">
-          <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-gray-500">Compra e conversão</p>
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-5">
-            <Select label="Unidade de compra *" value={v.purchaseUnit} onChange={(e) => f.set('purchaseUnit', e.target.value)} error={f.errors.purchaseUnit}>
-              {PURCHASE_UNITS.map((u) => (
-                <option key={u}>{u}</option>
-              ))}
-            </Select>
-            <NumInput label="Preço de compra *" value={v.purchasePrice} onChange={(n) => f.set('purchasePrice', n ?? 0)} error={f.errors.purchasePrice} suffix="R$" />
-            <NumInput label="Contém *" value={v.packQty} onChange={(n) => f.set('packQty', n ?? 0)} error={f.errors.packQty} hint="Qtde. por unidade de compra" />
-            <Select label="Medida" value={v.packUnit} onChange={(e) => f.set('packUnit', e.target.value as Unit)}>
-              {unitOptions}
-            </Select>
-            <Select label="Unidade de utilização *" value={v.usageUnit} onChange={(e) => f.set('usageUnit', e.target.value as Unit)} error={f.errors.usageUnit}>
-              {unitOptions}
-            </Select>
+          <PurchaseFormat v={v} set={(patch) => f.setValues((s) => ({ ...s, ...patch }))} />
+          <div className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-4">
+            <NumInput
+              wrapClass="col-span-2 sm:col-span-1"
+              label={`Preço pago por ${v.purchaseUnit} *`}
+              value={v.purchasePrice}
+              onChange={(n) => f.set('purchasePrice', n ?? 0)}
+              error={f.errors.purchasePrice}
+              suffix="R$"
+              hint={v.purchasePrice ? undefined : 'Sem preço: o item aparece como “sem preço” no orçamento.'}
+            />
+            <p className="col-span-2 self-center text-sm sm:col-span-3">
+              {cost.value != null ? (
+                <>
+                  No orçamento: <strong className="num">{formatBRL(cost.value)}</strong> por {unitShort(v.usageUnit)}
+                  <span className="text-gray-500">
+                    {' '}
+                    ({v.purchaseUnit} de {formatNumber(v.packQty, 3)} {unitShort(v.packUnit)} a {formatBRL(v.purchasePrice)})
+                  </span>
+                </>
+              ) : (
+                <span className="text-red-700">{cost.error}</span>
+              )}
+            </p>
           </div>
-          <p className="mt-3 text-sm">
-            {cost.value != null ? (
-              <>
-                Custo de utilização: <strong className="num">{formatBRL(cost.value)}</strong> por {unitShort(v.usageUnit)}
-                <span className="text-gray-500">
-                  {' '}
-                  ({v.purchaseUnit} de {formatNumber(v.packQty, 3)} {unitShort(v.packUnit)} a {formatBRL(v.purchasePrice)})
-                </span>
-              </>
-            ) : (
-              <span className="text-red-700">{cost.error}</span>
+          <details className="mt-3 text-sm" open={!detectFormat(v)}>
+            <summary className="cursor-pointer text-[13px] font-medium text-brand-700">Opções avançadas (unidades, medidas e peso)</summary>
+            <div className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-4">
+              <Select label="Unidade de compra" value={v.purchaseUnit} onChange={(e) => f.set('purchaseUnit', e.target.value)} error={f.errors.purchaseUnit}>
+                {[...new Set([v.purchaseUnit, ...PURCHASE_UNITS])].map((u) => (
+                  <option key={u}>{u}</option>
+                ))}
+              </Select>
+              <NumInput label="Contém" value={v.packQty} onChange={(n) => f.set('packQty', n ?? 0)} error={f.errors.packQty} />
+              <Select label="Medida" value={v.packUnit} onChange={(e) => f.set('packUnit', e.target.value as Unit)}>
+                {unitOptions}
+              </Select>
+              <Select label="Usar no orçamento em" value={v.usageUnit} onChange={(e) => f.set('usageUnit', e.target.value as Unit)} error={f.errors.usageUnit}>
+                {unitOptions}
+              </Select>
+              <NumInput label="Comprimento" suffix="mm" nullable value={v.lengthMm} onChange={(n) => f.set('lengthMm', n)} />
+              <NumInput label="Largura" suffix="mm" nullable value={v.widthMm} onChange={(n) => f.set('widthMm', n)} />
+              <NumInput label="Espessura" suffix="mm" nullable value={v.thicknessMm} onChange={(n) => f.set('thicknessMm', n)} />
+              <NumInput label="Peso (un. compra)" suffix="kg" nullable value={v.weightKg} onChange={(n) => f.set('weightKg', n)} hint="Permite usar em kg" />
+            </div>
+            {!isCompatible(v.packUnit, v.usageUnit) && UNIT_INFO[v.usageUnit].dimension === 'massa' && (
+              <p className="mt-1 text-xs text-gray-600">Para usar em unidade de massa, informe o peso da unidade de compra.</p>
             )}
-          </p>
-          {!isCompatible(v.packUnit, v.usageUnit) && UNIT_INFO[v.usageUnit].dimension === 'massa' && (
-            <p className="mt-1 text-xs text-gray-600">Para usar em unidade de massa, informe o peso da unidade de compra abaixo.</p>
-          )}
+          </details>
         </div>
 
-        <NumInput wrapClass="sm:col-span-1" label="Comprimento" suffix="mm" nullable value={v.lengthMm} onChange={(n) => f.set('lengthMm', n)} />
-        <NumInput wrapClass="sm:col-span-1" label="Largura" suffix="mm" nullable value={v.widthMm} onChange={(n) => f.set('widthMm', n)} />
-        <NumInput wrapClass="sm:col-span-1" label="Espessura" suffix="mm" nullable value={v.thicknessMm} onChange={(n) => f.set('thicknessMm', n)} />
-        <NumInput wrapClass="sm:col-span-1" label="Peso (un. compra)" suffix="kg" nullable value={v.weightKg} onChange={(n) => f.set('weightKg', n)} />
         <Select wrapClass="sm:col-span-2" label="Fornecedor" value={v.supplierId ?? ''} onChange={(e) => f.set('supplierId', e.target.value || null)} error={f.errors.supplierId}>
           <option value="">—</option>
           {suppliers.data?.map((s) => (

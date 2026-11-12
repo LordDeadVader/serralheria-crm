@@ -3,6 +3,7 @@ import { D, roundMoney } from '../calculations/money';
 import type { QuoteDocument } from '../schemas/quote';
 import { unitShort } from '../calculations/units';
 import { formatNumber } from '../calculations/money';
+import { travelCosts } from '../calculations/travel';
 
 export interface ClientLine {
   description: string;
@@ -25,12 +26,17 @@ export function allocateClientLines(doc: QuoteDocument, calc: CalcResult): Clien
     })),
     ...doc.labor.map((l, i) => ({
       description: l.name,
-      qty: l.mode === 'hour' ? 'Serviço' : `${formatNumber(l.qty * q, 2)} un`,
+      qty: 'Serviço',
       weight: calc.laborLines[i] ?? 0,
     })),
     ...doc.extras
       .filter((e) => e.kind !== 'indireto')
       .map((e) => ({ description: e.description, qty: '1 vb', weight: e.amount })),
+    // Deslocamento aparece como um único item para o cliente (sem detalhar combustível/hospedagem).
+    ...(() => {
+      const t = travelCosts(doc.travel).total;
+      return t > 0 ? [{ description: 'Deslocamento e despesas de viagem da equipe', qty: '1 vb', weight: t }] : [];
+    })(),
   ].filter((l) => l.weight > 0);
 
   const totalWeight = raw.reduce((s, l) => s + l.weight, 0);

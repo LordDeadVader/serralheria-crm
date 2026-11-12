@@ -15,6 +15,13 @@
       "when": 1794421773374,
       "tag": "0001_estoque",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1794482131282,
+      "tag": "0002_modelos_presets",
+      "breakpoints": true
     }
   ]
 }

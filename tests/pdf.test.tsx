@@ -6,7 +6,7 @@ import { allocateClientLines } from '../src/pdf/allocate';
 import { QuotePdf } from '../src/pdf/QuotePdf';
 import { pdfPageCount } from '../src/pdf/generate';
 import { defaultCompanySettings } from '../src/schemas/settings';
-import type { QuoteDocument } from '../src/schemas/quote';
+import { emptyTravel, type QuoteDocument } from '../src/schemas/quote';
 import type { Client, Company } from '../src/types/domain';
 
 const doc: QuoteDocument = {
@@ -31,13 +31,14 @@ const doc: QuoteDocument = {
     { key: 'c', materialId: null, code: '', name: 'Roldana', unit: 'un', qty: 4, unitCost: 25, wastePct: 0 },
   ],
   labor: [
-    { key: 'l', serviceId: null, name: 'Soldagem', mode: 'hour', qty: 8, rate: 35 },
-    { key: 'm', serviceId: null, name: 'Instalação', mode: 'hour', qty: 4, rate: 40 },
+    { key: 'l', serviceId: null, name: 'Soldagem', mode: 'hour', qty: 8, workers: 1, rate: 35 },
+    { key: 'm', serviceId: null, name: 'Instalação', mode: 'hour', qty: 4, workers: 1, rate: 40 },
   ],
   extras: [
     { key: 'e', description: 'Frete', kind: 'transporte', amount: 80 },
     { key: 'f', description: 'Rateio aluguel', kind: 'indireto', amount: 30 },
   ],
+  travel: emptyTravel(),
   pricing: { overheadPct: 10, taxPct: 6, feePct: 2, commissionPct: 0, marginPct: 25, manualPrice: null },
   commercial: {
     validityDays: 15,

@@ -1,9 +1,10 @@
-import type { QuoteDocument } from '../../schemas/quote';
+import { emptyTravel, type QuoteDocument } from '../../schemas/quote';
 import type { Company } from '../../types/domain';
 
 export function emptyDocument(company: Company | null, clientId = ''): QuoteDocument {
   const fin = company?.settings.financial;
   const q = company?.settings.quote;
+  const tr = company?.settings.travel;
   return {
     clientId,
     project: {
@@ -23,6 +24,14 @@ export function emptyDocument(company: Company | null, clientId = ''): QuoteDocu
     materials: [],
     labor: [],
     extras: [],
+    travel: {
+      ...emptyTravel(),
+      origin: company?.address ?? '',
+      kmPerLiter: tr?.kmPerLiter ?? 10,
+      fuelPrice: tr?.fuelPrice ?? 0,
+      mealPerPersonDay: tr?.mealPerPersonDay ?? 0,
+      lodgingPerPersonNight: tr?.lodgingPerPersonNight ?? 0,
+    },
     pricing: {
       overheadPct: fin?.overheadPct ?? 10,
       taxPct: fin?.taxPct ?? 6,

@@ -16,10 +16,10 @@ export const cx = (...c: Array<string | false | null | undefined>) => c.filter(B
 
 type Variant = 'primary' | 'secondary' | 'ghost' | 'danger';
 const VARIANTS: Record<Variant, string> = {
-  primary: 'bg-brand-700 text-white hover:bg-brand-800 border border-brand-700',
-  secondary: 'bg-white text-gray-800 border border-gray-300 hover:bg-gray-50',
-  ghost: 'text-gray-700 hover:bg-gray-100 border border-transparent',
-  danger: 'bg-white text-red-700 border border-red-200 hover:bg-red-50',
+  primary: 'bg-brand-700 text-white hover:bg-brand-800 border border-brand-700 shadow-sm',
+  secondary: 'bg-white text-gray-800 border border-slate-400/70 shadow-sm hover:border-brand-500 hover:bg-brand-50/50',
+  ghost: 'text-brand-800 hover:bg-brand-50 border border-transparent hover:border-brand-200',
+  danger: 'bg-white text-red-700 border border-red-300 shadow-sm hover:bg-red-50',
 };
 
 export const Button = forwardRef<
@@ -48,7 +48,7 @@ export const Button = forwardRef<
 /* ----------------------------- Formulários ---------------------------- */
 
 const inputCls =
-  'block w-full rounded-md border border-gray-300 bg-white px-2.5 py-2 text-base text-gray-900 md:py-1.5 md:text-sm placeholder:text-gray-400 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-100 disabled:bg-gray-50 disabled:text-gray-500';
+  'block w-full rounded-md border border-slate-400/70 bg-white shadow-[inset_0_1px_2px_rgba(15,23,42,0.06)] hover:border-brand-500/70 disabled:hover:border-slate-300 px-2.5 py-2 text-base text-gray-900 md:py-1.5 md:text-sm placeholder:text-gray-400 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-100 disabled:border-slate-300 disabled:bg-gray-50 disabled:text-gray-500';
 
 export function Field({ label, error, hint, children, className, htmlFor }: { label?: string; error?: string; hint?: ReactNode; children: ReactNode; className?: string; htmlFor?: string }) {
   return (
@@ -70,7 +70,7 @@ export const Input = forwardRef<HTMLInputElement, InputHTMLAttributes<HTMLInputE
     const iid = id ?? auto;
     const el = (
       <div className="relative">
-        <input ref={ref} id={iid} className={cx(inputCls, error && 'border-red-400', suffix && 'pr-9', className)} aria-invalid={!!error} {...p} />
+        <input ref={ref} id={iid} className={cx(inputCls, error && 'border-red-400!', suffix && 'pr-9', className)} aria-invalid={!!error} {...p} />
         {suffix && <span className="pointer-events-none absolute inset-y-0 right-2.5 flex items-center text-xs text-gray-500">{suffix}</span>}
       </div>
     );
@@ -87,7 +87,7 @@ export function Select({ label, error, hint, wrapClass, className, children, id,
   const auto = useId();
   const iid = id ?? auto;
   const el = (
-    <select id={iid} className={cx(inputCls, 'pr-8', error && 'border-red-400', className)} {...p}>
+    <select id={iid} className={cx(inputCls, 'pr-8', error && 'border-red-400!', className)} {...p}>
       {children}
     </select>
   );
@@ -104,7 +104,7 @@ export function Textarea({ label, error, hint, wrapClass, className, id, ...p }:
   const iid = id ?? auto;
   return (
     <Field label={label} error={error} hint={hint} className={wrapClass} htmlFor={iid}>
-      <textarea id={iid} rows={3} className={cx(inputCls, 'resize-y', error && 'border-red-400', className)} {...p} />
+      <textarea id={iid} rows={3} className={cx(inputCls, 'resize-y', error && 'border-red-400!', className)} {...p} />
     </Field>
   );
 }

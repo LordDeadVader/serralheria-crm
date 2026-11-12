@@ -13,6 +13,7 @@ import { quotesRepo } from '../repositories';
 import { quoteDocumentSchema, type QuoteDocument } from '../schemas/quote';
 import { EDITABLE_STATUSES } from '../types/domain';
 import { STEPS, emptyDocument, stepForPath } from './quote/defaults';
+import { normalizeDocument } from '../lib/applyTemplate';
 import { ClientStep, CommercialStep, ExtrasStep, LaborStep, MaterialsStep, PricingStep, ProjectStep, ReviewStep } from './quote/Steps';
 
 const DRAFT_KEY = 'scrm.quote-draft.new';
@@ -64,6 +65,7 @@ export function QuoteEditorPage() {
       restored = true;
     } else initial = base;
   } else initial = existing.data!.current.document;
+  initial = normalizeDocument(initial);
 
   return <Editor key={id ?? 'new'} initial={initial} restored={restored} quote={existing.data ?? null} />;
 }

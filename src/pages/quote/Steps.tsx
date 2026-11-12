@@ -1,20 +1,18 @@
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { Plus, Trash2, UserPlus } from 'lucide-react';
+import { UserPlus } from 'lucide-react';
 import { ClientFormModal, formatAddress } from '../../components/ClientFormModal';
 import { NumInput } from '../../components/NumInput';
-import { DurationInput } from '../../components/DurationInput';
 import { Badge, Button, Checkbox, Empty, Input, Panel, Select, Textarea, cx } from '../../components/ui';
 import type { CalcResult } from '../../calculations/engine';
 import { paymentPlan } from '../../calculations/engine';
+import { travelCosts } from '../../calculations/travel';
 import { formatBRL, formatNumber, formatPct, roundMoney } from '../../calculations/money';
-import { UNITS, safeCostPerUsageUnit, unitShort, type Unit } from '../../calculations/units';
-import { newKey } from '../../lib/format';
-import { MaterialFormModal } from '../MaterialsPage';
-import { clientsRepo, materialsRepo, servicesRepo } from '../../repositories';
+import { clientsRepo } from '../../repositories';
 import type { QuoteDocument } from '../../schemas/quote';
-import type { Company, Material } from '../../types/domain';
+import type { Company } from '../../types/domain';
 import { SERVICE_TYPES } from './defaults';
+import { TemplatePicker } from './ItemSteps';
 
 export interface StepProps {
   doc: QuoteDocument;
@@ -73,11 +71,14 @@ export function ClientStep({ doc, update, errors }: StepProps) {
 
 /* ------------------------------ 2. Projeto ----------------------------- */
 
-export function ProjectStep({ doc, update, errors }: StepProps) {
+export function ProjectStep({ doc, update, errors, company }: StepProps) {
   const p = doc.project;
   const set = <K extends keyof QuoteDocument['project']>(k: K, v: QuoteDocument['project'][K]) => update((d) => void (d.project[k] = v));
   return (
     <Panel title="Informações do projeto">
+      <div className="mb-4">
+        <TemplatePicker doc={doc} update={update} company={company} kind="projeto" />
+      </div>
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-6">
         <Input wrapClass="sm:col-span-4" label="Nome do projeto *" value={p.name} onChange={(e) => set('name', e.target.value)} error={errors['project.name']} placeholder="Ex.: Portão de correr frontal" />
         <Select wrapClass="sm:col-span-2" label="Tipo de serviço" value={p.serviceType} onChange={(e) => set('serviceType', e.target.value)}>
@@ -121,316 +122,8 @@ export function ProjectStep({ doc, update, errors }: StepProps) {
   );
 }
 
-/* ----------------------------- 3. Materiais ---------------------------- */
-
-export function MaterialsStep({ doc, update, errors, calc, company }: StepProps) {
-  const mats = useQuery({ queryKey: ['materials', ''], queryFn: () => materialsRepo.list('') });
-  const [pick, setPick] = useState('');
-  const [creating, setCreating] = useState(false);
-  const defWaste = company?.settings.financial.wastePct ?? 5;
-  const active = useMemo(() => (mats.data ?? []).filter((m) => m.status === 'ativo'), [mats.data]);
-  const groups = useMemo(() => {
-    const g = new Map<string, Material[]>();
-    for (const m of active) g.set(m.category || 'Sem categoria', [...(g.get(m.category || 'Sem categoria') ?? []), m]);
-    return [...g.entries()];
-  }, [active]);
-
-  function add(m: Material) {
-    const c = safeCostPerUsageUnit({ purchasePrice: m.purchasePrice, packQty: m.packQty, packUnit: m.packUnit, usageUnit: m.usageUnit, packWeightKg: m.weightKg });
-    update((d) =>
-      void d.materials.push({ key: newKey(), materialId: m.id, code: m.code, name: m.name, unit: m.usageUnit, qty: 1, unitCost: c.value ?? 0, wastePct: defWaste }),
-    );
-  }
-
-  return (
-    <Panel title="Materiais (por unidade do produto)" bodyClass="p-0">
-      <div className="flex flex-col gap-2 border-b border-gray-200 p-3 sm:flex-row">
-        <Select
-          value={pick}
-          onChange={(e) => {
-            const m = active.find((x) => x.id === e.target.value);
-            if (m) add(m);
-            setPick('');
-          }}
-          aria-label="Adicionar material do cadastro"
-          className="sm:max-w-md"
-        >
-          <option value="">Adicionar material do cadastro…</option>
-          {groups.map(([cat, list]) => (
-            <optgroup key={cat} label={cat}>
-              {list.map((m) => (
-                <option key={m.id} value={m.id}>
-                  {m.name}
-                  {m.isDemo ? ' (exemplo)' : ''}
-                </option>
-              ))}
-            </optgroup>
-          ))}
-        </Select>
-        <div className="flex gap-2">
-          <Button size="md" icon={<Plus className="size-4" />} onClick={() => setCreating(true)}>
-            Novo material
-          </Button>
-          <Button
-            size="md"
-            variant="ghost"
-            onClick={() => update((d) => void d.materials.push({ key: newKey(), materialId: null, code: '', name: '', unit: 'un', qty: 1, unitCost: 0, wastePct: defWaste }))}
-          >
-            Item avulso
-          </Button>
-        </div>
-      </div>
-      {doc.materials.length === 0 ? (
-        <Empty title="Nenhum material adicionado">Selecione materiais do cadastro. O custo por unidade de uso é calculado automaticamente a partir do preço de compra.</Empty>
-      ) : (
-        <div className="overflow-x-auto">
-          <table className="tbl tbl-cards md:min-w-[760px]">
-            <thead>
-              <tr>
-                <th>Material</th>
-                <th className="w-24 text-right">Qtde.</th>
-                <th className="w-24">Un.</th>
-                <th className="w-32 text-right">Custo/un.</th>
-                <th className="w-24 text-right">Desperd. %</th>
-                <th className="w-32 text-right">Subtotal</th>
-                <th className="w-px" />
-              </tr>
-            </thead>
-            <tbody>
-              {doc.materials.map((l, i) => (
-                <tr key={l.key}>
-                  <td className="c-full">
-                    <Input value={l.name} onChange={(e) => update((d) => void (d.materials[i].name = e.target.value))} error={errors[`materials.${i}.name`]} aria-label="Material" />
-                  </td>
-                  <td className="c-half">
-                    <NumInput ariaLabel="Quantidade" value={l.qty} onChange={(n) => update((d) => void (d.materials[i].qty = n ?? 0))} />
-                  </td>
-                  <td className="c-half">
-                    <Select value={l.unit} onChange={(e) => update((d) => void (d.materials[i].unit = e.target.value as Unit))} aria-label="Unidade" disabled={!!l.materialId}>
-                      {UNITS.map((u) => (
-                        <option key={u} value={u}>
-                          {unitShort(u)}
-                        </option>
-                      ))}
-                    </Select>
-                  </td>
-                  <td className="c-half">
-                    <NumInput ariaLabel="Custo unitário" value={l.unitCost} onChange={(n) => update((d) => void (d.materials[i].unitCost = n ?? 0))} />
-                  </td>
-                  <td className="c-half">
-                    <NumInput ariaLabel="Desperdício" value={l.wastePct} onChange={(n) => update((d) => void (d.materials[i].wastePct = n ?? 0))} error={errors[`materials.${i}.wastePct`]} />
-                  </td>
-                  <td className="c-grow num text-right font-medium md:font-normal">
-                    <div>
-                      {formatBRL(calc.materialLines[i]?.total ?? 0)}
-                      {(calc.materialLines[i]?.waste ?? 0) > 0 && <span className="block text-[11px] font-normal text-gray-500">+{formatBRL(calc.materialLines[i].waste)} desp.</span>}
-                    </div>
-                  </td>
-                  <td className="c-actions">
-                    <Button size="sm" variant="ghost" title="Remover" aria-label="Remover material" onClick={() => update((d) => void d.materials.splice(i, 1))} icon={<Trash2 className="size-3.5 text-red-600" />} />
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-            <tfoot>
-              <tr>
-                <td colSpan={5} className="text-right text-[13px] text-gray-600 max-md:block">
-                  Materiais {formatBRL(calc.materialsCost)} + desperdício {formatBRL(calc.wasteCost)}
-                  {doc.project.quantity !== 1 && ` (× ${formatNumber(doc.project.quantity)} unidades)`}
-                </td>
-                <td className="num text-right font-semibold">{formatBRL(calc.materialsCost + calc.wasteCost)}</td>
-                <td />
-              </tr>
-            </tfoot>
-          </table>
-        </div>
-      )}
-      <MaterialFormModal open={creating} material={null} onClose={() => setCreating(false)} onSaved={(m) => add(m)} />
-    </Panel>
-  );
-}
-
-/* ---------------------------- 4. Mão de obra --------------------------- */
-
-export function LaborStep({ doc, update, errors, calc, company }: StepProps) {
-  const svcs = useQuery({ queryKey: ['services'], queryFn: servicesRepo.list });
-  const [pick, setPick] = useState('');
-  const active = (svcs.data ?? []).filter((s) => s.status === 'ativo');
-  return (
-    <Panel title="Mão de obra e serviços (por unidade do produto)" bodyClass="p-0">
-      <div className="flex flex-col gap-2 border-b border-gray-200 p-3 sm:flex-row">
-        <Select
-          value={pick}
-          className="sm:max-w-md"
-          aria-label="Adicionar serviço"
-          onChange={(e) => {
-            const s = active.find((x) => x.id === e.target.value);
-            if (s)
-              update((d) =>
-                void d.labor.push({
-                  key: newKey(),
-                  serviceId: s.id,
-                  name: s.name,
-                  mode: s.mode,
-                  qty: s.mode === 'hour' ? s.estimatedHours || 1 : 1,
-                  rate: s.mode === 'hour' ? s.hourlyCost : s.fixedPrice,
-                }),
-              );
-            setPick('');
-          }}
-        >
-          <option value="">Adicionar serviço do cadastro…</option>
-          {active.map((s) => (
-            <option key={s.id} value={s.id}>
-              {s.name} — {s.mode === 'hour' ? `${formatBRL(s.hourlyCost)}/h` : formatBRL(s.fixedPrice)}
-              {s.isDemo ? ' (exemplo)' : ''}
-            </option>
-          ))}
-        </Select>
-        <Button
-          variant="ghost"
-          icon={<Plus className="size-4" />}
-          onClick={() => update((d) => void d.labor.push({ key: newKey(), serviceId: null, name: '', mode: 'hour', qty: 1, rate: company?.settings.financial.hourlyCost ?? 0 }))}
-        >
-          Serviço avulso
-        </Button>
-      </div>
-      {doc.labor.length === 0 ? (
-        <Empty title="Nenhum serviço adicionado">Ex.: 4 h 30 min de soldagem × R$ 35,00/h = R$ 157,50.</Empty>
-      ) : (
-        <div className="overflow-x-auto">
-          <table className="tbl tbl-cards md:min-w-[780px]">
-            <thead>
-              <tr>
-                <th>Serviço</th>
-                <th className="w-36">Cobrança</th>
-                <th className="w-44 text-right">Tempo / Qtde.</th>
-                <th className="w-32 text-right">Valor</th>
-                <th className="w-32 text-right">Subtotal</th>
-                <th className="w-px" />
-              </tr>
-            </thead>
-            <tbody>
-              {doc.labor.map((l, i) => (
-                <tr key={l.key}>
-                  <td className="c-full">
-                    <Input value={l.name} onChange={(e) => update((d) => void (d.labor[i].name = e.target.value))} error={errors[`labor.${i}.name`]} aria-label="Serviço" />
-                  </td>
-                  <td className="c-full">
-                    <Select value={l.mode} onChange={(e) => update((d) => void (d.labor[i].mode = e.target.value as 'hour' | 'fixed'))} aria-label="Cobrança">
-                      <option value="hour">Por hora</option>
-                      <option value="fixed">Preço fixo</option>
-                    </Select>
-                  </td>
-                  <td className="c-half">
-                    {l.mode === 'hour' ? (
-                      <DurationInput ariaLabel="Tempo" value={l.qty} onChange={(h) => update((d) => void (d.labor[i].qty = h))} />
-                    ) : (
-                      <NumInput ariaLabel="Quantidade" value={l.qty} onChange={(n) => update((d) => void (d.labor[i].qty = n ?? 0))} />
-                    )}
-                  </td>
-                  <td className="c-half">
-                    <NumInput ariaLabel="Valor" value={l.rate} onChange={(n) => update((d) => void (d.labor[i].rate = n ?? 0))} />
-                  </td>
-                  <td className="c-grow num text-right font-medium md:font-normal">{formatBRL(calc.laborLines[i] ?? 0)}</td>
-                  <td className="c-actions">
-                    <Button size="sm" variant="ghost" title="Remover" aria-label="Remover serviço" onClick={() => update((d) => void d.labor.splice(i, 1))} icon={<Trash2 className="size-3.5 text-red-600" />} />
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-            <tfoot>
-              <tr>
-                <td colSpan={4} className="text-right text-[13px] text-gray-600 max-md:block">
-                  Total de mão de obra{doc.project.quantity !== 1 && ` (× ${formatNumber(doc.project.quantity)} unidades)`}
-                </td>
-                <td className="num text-right font-semibold">{formatBRL(calc.laborCost)}</td>
-                <td />
-              </tr>
-            </tfoot>
-          </table>
-        </div>
-      )}
-    </Panel>
-  );
-}
-
-/* ----------------------------- 5. Despesas ----------------------------- */
-
-const KIND_LABEL = { indireto: 'Despesa indireta', transporte: 'Transporte', outro: 'Outra despesa' } as const;
-
-export function ExtrasStep({ doc, update, errors, calc }: StepProps) {
-  return (
-    <div className="space-y-4">
-      <Panel title="Custos indiretos">
-        <div className="grid gap-3 sm:grid-cols-3">
-          <NumInput
-            label="Rateio de custos indiretos"
-            suffix="%"
-            value={doc.pricing.overheadPct}
-            onChange={(n) => update((d) => void (d.pricing.overheadPct = n ?? 0))}
-            error={errors['pricing.overheadPct']}
-            hint="Aluguel, energia, administrativo… aplicado sobre o custo direto."
-          />
-          <div className="text-sm text-gray-600 sm:col-span-2 sm:pt-6">
-            Custo direto {formatBRL(calc.directCost)} × {formatPct(doc.pricing.overheadPct)} = <strong className="num text-gray-900">{formatBRL(calc.overheadPctCost)}</strong>
-            <p className="mt-1 text-xs text-gray-500">Para evitar dupla contagem, não lance como despesa abaixo um custo que já está coberto por este percentual.</p>
-          </div>
-        </div>
-      </Panel>
-      <Panel
-        title="Despesas da obra (valor total, não multiplicado pela quantidade)"
-        bodyClass="p-0"
-        actions={
-          <Button size="sm" icon={<Plus className="size-3.5" />} onClick={() => update((d) => void d.extras.push({ key: newKey(), description: '', kind: 'transporte', amount: 0 }))}>
-            Adicionar despesa
-          </Button>
-        }
-      >
-        {doc.extras.length === 0 ? (
-          <Empty title="Nenhuma despesa adicional">Frete, deslocamento, aluguel de equipamento, ART etc.</Empty>
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="tbl tbl-cards md:min-w-[560px]">
-              <thead>
-                <tr>
-                  <th>Descrição</th>
-                  <th className="w-44">Tipo</th>
-                  <th className="w-36 text-right">Valor</th>
-                  <th className="w-px" />
-                </tr>
-              </thead>
-              <tbody>
-                {doc.extras.map((x, i) => (
-                  <tr key={x.key}>
-                    <td className="c-full">
-                      <Input value={x.description} onChange={(e) => update((d) => void (d.extras[i].description = e.target.value))} error={errors[`extras.${i}.description`]} aria-label="Descrição" />
-                    </td>
-                    <td className="c-half">
-                      <Select value={x.kind} onChange={(e) => update((d) => void (d.extras[i].kind = e.target.value as keyof typeof KIND_LABEL))} aria-label="Tipo">
-                        {Object.entries(KIND_LABEL).map(([k, v]) => (
-                          <option key={k} value={k}>
-                            {v}
-                          </option>
-                        ))}
-                      </Select>
-                    </td>
-                    <td className="c-half">
-                      <NumInput ariaLabel="Valor" value={x.amount} onChange={(n) => update((d) => void (d.extras[i].amount = n ?? 0))} />
-                    </td>
-                    <td className="c-actions">
-                      <Button size="sm" variant="ghost" title="Remover" aria-label="Remover despesa" onClick={() => update((d) => void d.extras.splice(i, 1))} icon={<Trash2 className="size-3.5 text-red-600" />} />
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </Panel>
-    </div>
-  );
-}
+/* 3. Materiais, 4. Mão de obra e 5. Despesas/deslocamento ficam em ItemSteps.tsx. */
+export { MaterialsStep, LaborStep, ExtrasStep } from './ItemSteps';
 
 /* ------------------------- 6. Impostos e margem ------------------------ */
 
@@ -499,7 +192,7 @@ export function CommercialStep({ doc, update, calc }: StepProps) {
     <Panel title="Condições comerciais">
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
         <NumInput label="Validade da proposta" suffix="dias" value={c.validityDays} onChange={(n) => set('validityDays', Math.round(n ?? 0))} />
-        <NumInput label="Prazo de fabricação" suffix="dias" value={c.fabricationDays} onChange={(n) => set('fabricationDays', Math.round(n ?? 0))} />
+        <NumInput label="Prazo de montagem" suffix="dias" value={c.fabricationDays} onChange={(n) => set('fabricationDays', Math.round(n ?? 0))} />
         <NumInput label="Prazo de instalação" suffix="dias" value={c.installationDays} onChange={(n) => set('installationDays', Math.round(n ?? 0))} />
         <Input label="Responsável" value={c.responsible} onChange={(e) => set('responsible', e.target.value)} />
         <NumInput label="Entrada" suffix="%" value={c.downPaymentPct} onChange={(n) => set('downPaymentPct', Math.min(100, Math.max(0, n ?? 0)))} />
@@ -559,14 +252,14 @@ export function ReviewStep({ doc, calc, goTo }: StepProps & { goTo: (i: number) 
         </p>
       </Section>
       <Section title="Composição" step={2}>
-        {doc.materials.length} material(is), {doc.labor.length} serviço(s), {doc.extras.length} despesa(s)
+        {doc.materials.length} material(is), {doc.labor.length} serviço(s), {doc.extras.length} despesa(s){doc.travel?.enabled ? ` · deslocamento ${formatBRL(travelCosts(doc.travel).total)}` : ''}
       </Section>
       <Section title="Precificação" step={5}>
         Impostos {formatPct(doc.pricing.taxPct)} · Taxas {formatPct(doc.pricing.feePct)} · Comissão {formatPct(doc.pricing.commissionPct)} · Margem {formatPct(doc.pricing.marginPct)}
         {doc.pricing.manualPrice ? ` · Preço manual ${formatBRL(doc.pricing.manualPrice)}` : ''}
       </Section>
       <Section title="Condições" step={6}>
-        Validade {doc.commercial.validityDays} dias · Fabricação {doc.commercial.fabricationDays} dias · Instalação {doc.commercial.installationDays} dias · Entrada {formatPct(doc.commercial.downPaymentPct, 0)}
+        Validade {doc.commercial.validityDays} dias · Montagem {doc.commercial.fabricationDays} dias · Instalação {doc.commercial.installationDays} dias · Entrada {formatPct(doc.commercial.downPaymentPct, 0)}
         {doc.commercial.installments > 0 && ` + ${doc.commercial.installments} parcela(s)`} · {doc.commercial.showItemized ? 'Itens detalhados' : 'Valor global'}
       </Section>
       <div className="mt-3 flex items-baseline justify-between rounded-md bg-gray-900 px-4 py-3 text-white">

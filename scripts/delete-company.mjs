@@ -20,6 +20,7 @@ if (!flag('confirm')) {
 const c = sqlStr(id);
 d1(
   [
+    `DELETE FROM templates WHERE company_id = ${c};`,
     `DELETE FROM stock_movements WHERE company_id = ${c};`,
     `DELETE FROM stock_items WHERE company_id = ${c};`,
     `DELETE FROM quote_events WHERE company_id = ${c};`,
