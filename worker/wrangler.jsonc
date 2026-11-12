@@ -1,12 +1,24 @@
 {
   "$schema": "../node_modules/wrangler/config-schema.json",
-  "name": "serralheria-crm-api",
+  // Um único endereço: site institucional (/), CRM (/crm/) e API (/api).
+  "name": "wj-serralheria",
   "main": "src/index.ts",
   "compatibility_date": "2026-10-01",
   "observability": { "enabled": true },
+  "assets": {
+    // public/s = arquivos do site; public/crm = build do CRM (npm run build).
+    "directory": "./public",
+    "binding": "ASSETS",
+    "html_handling": "auto-trailing-slash",
+    "not_found_handling": "none"
+  },
   "vars": {
-    // Origens autorizadas a chamar a API (CORS). Separe por vírgula.
-    "ALLOWED_ORIGINS": "https://lorddeadvader.github.io,http://localhost:5173,http://127.0.0.1:5173"
+    // Origens extras autorizadas a chamar a API (apenas desenvolvimento local; o CRM usa o mesmo endereço).
+    "ALLOWED_ORIGINS": "http://localhost:5173,http://127.0.0.1:5173",
+    // Empresa dona do site e do CRM (uso exclusivo). Em desenvolvimento local, sobrescreva em worker/.dev.vars.
+    "SITE_COMPANY_ID": "791e75f9-f738-42da-b347-44ecfff53a37",
+    // Endereço público (canonical/sitemap). Ao ligar um domínio próprio, troque aqui.
+    "PUBLIC_URL": ""
   },
   "d1_databases": [
     {
@@ -15,5 +27,6 @@
       "database_id": "868bb98b-0977-4e60-9c33-120ae09b9707",
       "migrations_dir": "migrations"
     }
-  ]
+  ],
+  "kv_namespaces": [{ "binding": "MEDIA", "id": "d465f25e57f645e3869d8bd9d0a29488" }]
 }

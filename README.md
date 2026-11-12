@@ -1,11 +1,20 @@
-# Serralheria CRM
+# WJR Serralheria — site e sistema de gestão
 
-Sistema Web de CRM, gestão de custos e geração de orçamentos profissionais para serralherias.
+Site institucional da WJR Serralheria e o sistema interno de gestão (CRM, orçamentos, estoque), de **uso exclusivo da empresa**.
 
-- **Aplicação:** https://lorddeadvader.github.io/serralheria-crm/
-- **API:** https://serralheria-crm-api.davihenriqueded.workers.dev (`/health` para verificar)
+- **Site:** https://wj-serralheria.davihenriqueded.workers.dev/
+- **CRM (área restrita, instalável como aplicativo):** https://wj-serralheria.davihenriqueded.workers.dev/crm/
+- **API:** `/api` no mesmo endereço (`/api/health` para verificar)
+- O endereço antigo (`lorddeadvader.github.io/serralheria-crm`) apenas redireciona para o novo.
 
-O proprietário cadastra materiais e serviços, registra clientes, monta orçamentos com cálculo de custos em tempo real, define margem e gera uma proposta comercial em PDF — sem expor custos internos ao cliente.
+| Endereço | O que é |
+| --- | --- |
+| `/`, `/servicos`, `/projetos`, `/sobre`, `/contato`, `/orcamento` | Site público (HTML gerado no servidor, indexável) |
+| `/crm/` | CRM e **painel do site** (login obrigatório). App instalável (PWA) |
+| `/api/*` | API do CRM, do painel do site e do formulário público |
+| `/media/*` | Fotos enviadas pelo painel do site |
+
+Como gerenciar o site (projetos, serviços, textos, solicitações) e a integração futura com outros sistemas: **[docs/SITE.md](docs/SITE.md)**.
 
 ## Funcionalidades
 
@@ -21,12 +30,16 @@ O proprietário cadastra materiais e serviços, registra clientes, monta orçame
 | Produção (Kanban de aprovados → em produção → concluídos) | Básico |
 | Relatórios (desempenho mensal, conversão, margem bruta) | Básico |
 | Configurações (empresa, logotipo, padrões financeiros e da proposta, troca de senha) | Implementado |
-| Projetos e modelos | **Não implementado** — a tela informa isso; use "Duplicar" como alternativa |
+| Modelos e kits, Estoque | Implementado |
+| Painel do site (projetos, serviços, textos, depoimentos, solicitações recebidas) | Implementado |
+| App instalável (PWA, somente o CRM) | Implementado |
 
 ## Arquitetura
 
 ```
-GitHub Pages (React + Vite, estático)  ──HTTPS + Bearer──▶  Cloudflare Worker (Hono)  ──▶  Cloudflare D1 (SQLite)
+                     ┌─ /            site (HTML do servidor) ─┐
+Navegador ──HTTPS──▶ │  /crm/        CRM (React, estático)     │ Cloudflare Worker (Hono) ──▶ D1 (SQLite)
+                     └─ /api, /media API e fotos ──────────────┘                          └─▶ KV (fotos e anexos)
 ```
 
 - **Frontend:** React 19, TypeScript, Vite, Tailwind CSS 4, TanStack Query, React Router (HashRouter), lucide-react.
@@ -73,20 +86,23 @@ npm install
 npm run db:migrate:local
 ```
 
+Crie `worker/.dev.vars` com a empresa local dona do site (id da tabela `companies` do banco local) e, se quiser testar cadastros, `ALLOW_SIGNUP=true`:
+
+```
+SITE_COMPANY_ID=<id-da-empresa-local>
+ALLOW_SIGNUP=true
+```
+
+Site + API em http://localhost:8787 (o CRM compilado fica em http://localhost:8787/crm/ depois de `npm run build`):
+
 ```bash
 npm run worker:dev
 ```
 
-Em outro terminal (com `.env.local` contendo `VITE_API_URL=http://localhost:8787`):
+CRM com recarga automática em http://localhost:5173 (com `.env.local` contendo `VITE_API_URL=http://localhost:8787/api`):
 
 ```bash
 npm run dev
-```
-
-Crie um convite local para se cadastrar:
-
-```bash
-npm run invite:create -- --local
 ```
 
 ### Testes
@@ -99,15 +115,21 @@ npm test
 npm run typecheck
 ```
 
-Teste de ponta a ponta da API (cria duas empresas de teste a partir de dois convites):
+Teste de ponta a ponta da API do CRM (com cadastro local ligado; cria duas empresas a partir de dois convites):
 
 ```bash
-npm run test:api -- http://localhost:8787 CONV-AAAA-... CONV-BBBB-...
+npm run test:api -- http://localhost:8787/api CONV-AAAA-... CONV-BBBB-...
+```
+
+Teste de ponta a ponta do site e do painel do site (páginas, SEO, formulário com anexo, envio de fotos, permissões). A senha é lida de um arquivo:
+
+```bash
+node scripts/smoke-site.mjs http://localhost:8787 usuario@local caminho/da/senha.txt
 ```
 
 ## Publicação
 
-### API (Cloudflare)
+Tudo (site, CRM e API) é publicado no Cloudflare Worker `wj-serralheria`, a partir desta máquina:
 
 ```bash
 npx wrangler login
@@ -118,29 +140,20 @@ npm run db:migrate:remote
 ```
 
 ```bash
+npm run build
+```
+
+```bash
 npm run worker:deploy
 ```
 
-As origens autorizadas (CORS) ficam em `worker/wrangler.jsonc` → `ALLOWED_ORIGINS`.
+O GitHub Actions (`.github/workflows/deploy.yml`) verifica tipos, roda os testes e o build a cada push, e publica no GitHub Pages apenas o redirecionamento do endereço antigo.
 
-### Frontend (GitHub Pages)
-
-O workflow `.github/workflows/deploy.yml` roda a cada push em `main`: instala dependências, verifica tipos, executa os testes, gera o build e publica no Pages, conferindo se a URL responde.
-
-Configuração necessária no repositório:
-
-- **Settings → Pages → Source:** GitHub Actions.
-- **Settings → Secrets and variables → Actions → Variables:** `VITE_API_URL` = URL pública da API (HTTPS). É uma variável pública; nenhum segredo vai para o frontend.
+Configuração do Worker em `worker/wrangler.jsonc`: `SITE_COMPANY_ID` (empresa dona do site e do CRM), `PUBLIC_URL` (domínio próprio, quando houver), banco D1 e o KV `MEDIA`. Detalhes em [docs/SITE.md](docs/SITE.md#variáveis-de-ambiente).
 
 ## Contas e acesso
 
-O cadastro exige **código de convite** de uso único (não existe cadastro aberto nem credencial administrativa pública). Cada convite cria uma empresa isolada.
-
-```bash
-npm run invite:create -- --remote --note "Nome da serralheria" --days 7
-```
-
-O código aparece uma única vez; envie ao proprietário por canal privado. Ele acessa a aplicação, escolhe **Criar conta com convite** e define a própria senha.
+O sistema é de uso exclusivo da WJR: **não existe cadastro público** (a rota de cadastro está desligada; `ALLOW_SIGNUP` não é definido em produção). O login fica em `/crm/`.
 
 **Esqueci a senha:** o sistema não envia e-mails. O administrador gera uma senha temporária (as sessões do usuário são encerradas):
 
@@ -156,16 +169,18 @@ npm run company:delete -- --remote --email dono@empresa.com --confirm
 
 ## Segurança
 
-- Nenhum segredo no repositório nem no frontend; `VITE_API_URL` é pública.
+- Nenhum segredo no repositório nem no frontend.
+- Painel do site restrito à empresa dona do site; anexos das solicitações só abrem com login.
+- Formulário público com validação no servidor, campo-armadilha anti-robô, tempo mínimo de preenchimento e limite de envios por IP.
 - Isolamento por empresa aplicado no servidor: o `company_id` vem sempre da sessão, nunca do cliente, e toda consulta filtra por ele (coberto pelo teste E2E).
 - Validação de todas as entradas no servidor (Zod), percentuais limitados e totais recalculados pelo servidor.
 - Versões de orçamentos enviados/aprovados são bloqueadas; alterações geram nova versão.
 - O PDF do cliente nunca contém custo de compra, margem, lucro ou preços de fornecedores.
-- Cabeçalhos de segurança e CORS restrito às origens configuradas.
+- Cabeçalhos de segurança; CRM e API no mesmo endereço (CORS só para o desenvolvimento local).
 
 ## Dados de demonstração
 
-Cada nova empresa recebe 8 materiais e 4 serviços marcados como **Exemplo**, com preços apenas ilustrativos (não são referência de mercado). Podem ser editados ou excluídos e não são compartilhados entre empresas.
+O site começa com textos de serviço objetivos e **projetos de demonstração** com fotos provisórias do Unsplash, todos marcados como “Imagem ilustrativa” / “Demonstração” no site. Nenhum número, depoimento, certificação ou dado de contato é inventado: o que estiver vazio não aparece. Substitua pelo painel do site.
 
 ## Lista padrão de insumos, serviços e modelos
 

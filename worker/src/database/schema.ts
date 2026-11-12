@@ -297,3 +297,96 @@ export const templates = sqliteTable(
   },
   (t) => [index('templates_company_idx').on(t.companyId, t.kind, t.name)],
 );
+
+// ───────────── Site institucional ─────────────
+// Conteúdo público do site da empresa (editado pelo painel do site, lido pelas páginas públicas).
+
+export const siteSettings = sqliteTable('site_settings', {
+  companyId: text('company_id').primaryKey().references(() => companies.id),
+  data: text('data').notNull().default('{}'),
+  updatedAt: text('updated_at').notNull().default(now),
+});
+
+export const siteServices = sqliteTable(
+  'site_services',
+  {
+    id: text('id').primaryKey(),
+    companyId: text('company_id').notNull().references(() => companies.id),
+    slug: text('slug').notNull(),
+    title: text('title').notNull(),
+    summary: text('summary').notNull().default(''),
+    body: text('body').notNull().default(''),
+    features: text('features').notNull().default('[]'),
+    image: text('image'),
+    sort: integer('sort').notNull().default(0),
+    active: integer('active', { mode: 'boolean' }).notNull().default(true),
+    createdAt: text('created_at').notNull().default(now),
+    updatedAt: text('updated_at').notNull().default(now),
+  },
+  (t) => [uniqueIndex('site_services_slug_uq').on(t.companyId, t.slug)],
+);
+
+export const siteProjects = sqliteTable(
+  'site_projects',
+  {
+    id: text('id').primaryKey(),
+    companyId: text('company_id').notNull().references(() => companies.id),
+    slug: text('slug').notNull(),
+    title: text('title').notNull(),
+    category: text('category').notNull().default(''),
+    summary: text('summary').notNull().default(''),
+    description: text('description').notNull().default(''),
+    features: text('features').notNull().default('[]'),
+    materials: text('materials').notNull().default(''),
+    location: text('location').notNull().default(''),
+    year: text('year').notNull().default(''),
+    images: text('images').notNull().default('[]'),
+    coverIndex: integer('cover_index').notNull().default(0),
+    featured: integer('featured', { mode: 'boolean' }).notNull().default(false),
+    published: integer('published', { mode: 'boolean' }).notNull().default(true),
+    isDemo: integer('is_demo', { mode: 'boolean' }).notNull().default(false),
+    sort: integer('sort').notNull().default(0),
+    createdAt: text('created_at').notNull().default(now),
+    updatedAt: text('updated_at').notNull().default(now),
+  },
+  (t) => [uniqueIndex('site_projects_slug_uq').on(t.companyId, t.slug), index('site_projects_pub_idx').on(t.companyId, t.published)],
+);
+
+export const siteTestimonials = sqliteTable(
+  'site_testimonials',
+  {
+    id: text('id').primaryKey(),
+    companyId: text('company_id').notNull().references(() => companies.id),
+    name: text('name').notNull(),
+    role: text('role').notNull().default(''),
+    text: text('text').notNull(),
+    rating: integer('rating'),
+    source: text('source').notNull().default(''),
+    published: integer('published', { mode: 'boolean' }).notNull().default(true),
+    sort: integer('sort').notNull().default(0),
+    createdAt: text('created_at').notNull().default(now),
+  },
+  (t) => [index('site_testimonials_company_idx').on(t.companyId)],
+);
+
+export const siteLeads = sqliteTable(
+  'site_leads',
+  {
+    id: text('id').primaryKey(),
+    companyId: text('company_id').notNull().references(() => companies.id),
+    name: text('name').notNull(),
+    phone: text('phone').notNull(),
+    city: text('city').notNull().default(''),
+    service: text('service').notNull().default(''),
+    material: text('material').notNull().default(''),
+    description: text('description').notNull().default(''),
+    measures: text('measures').notNull().default(''),
+    reference: text('reference').notNull().default(''),
+    files: text('files').notNull().default('[]'),
+    status: text('status', { enum: ['novo', 'visto', 'respondido', 'arquivado'] }).notNull().default('novo'),
+    forwardStatus: text('forward_status').notNull().default(''),
+    clientId: text('client_id'),
+    createdAt: text('created_at').notNull().default(now),
+  },
+  (t) => [index('site_leads_company_idx').on(t.companyId, t.createdAt)],
+);

@@ -19,6 +19,8 @@ const ip = (h: (n: string) => string | undefined) => h('CF-Connecting-IP') ?? 'l
  * é de uso único, expira e cria uma nova empresa isolada com o usuário como proprietário.
  */
 authRoutes.post('/signup', async (c) => {
+  // Sistema de uso exclusivo da empresa: novos cadastros ficam desligados.
+  if (c.env.ALLOW_SIGNUP !== 'true') throw new HttpError(403, 'Cadastro desativado. Este sistema é de uso exclusivo.');
   const db = c.var.db;
   const ipKey = `signup:${ip(c.req.header.bind(c.req))}`;
   await checkRateLimit(db, ipKey);

@@ -4,7 +4,9 @@ import {
   BarChart3,
   Boxes,
   Factory,
+  Download,
   FileText,
+  Globe,
   LayoutDashboard,
   LogOut,
   Menu,
@@ -17,6 +19,7 @@ import {
   X,
 } from 'lucide-react';
 import { useAuth } from '../authentication/AuthContext';
+import { useInstall } from '../hooks/useInstall';
 import { cx } from '../components/ui';
 
 const NAV = [
@@ -31,10 +34,12 @@ const NAV = [
   { to: '/producao', label: 'Produção', icon: Factory },
   { to: '/relatorios', label: 'Relatórios', icon: BarChart3 },
   { to: '/configuracoes', label: 'Configurações', icon: Settings },
+  { to: '/site', label: 'Site e solicitações', icon: Globe },
 ];
 
 export function AppLayout() {
   const { company, user, logout } = useAuth();
+  const inst = useInstall();
   const [open, setOpen] = useState(false);
   const loc = useLocation();
   useEffect(() => setOpen(false), [loc.pathname]);
@@ -42,16 +47,10 @@ export function AppLayout() {
   const sidebar = (
     <div className="flex h-full flex-col">
       <div className="flex h-14 items-center gap-2.5 border-b border-gray-200 px-4">
-        {company?.logo ? (
-          <img src={company.logo} alt="" className="size-8 rounded object-contain" />
-        ) : (
-          <div className="flex size-8 items-center justify-center rounded bg-brand-700 text-xs font-bold text-white">
-            {(company?.name ?? 'S').slice(0, 2).toUpperCase()}
-          </div>
-        )}
+        <img src={`${import.meta.env.BASE_URL}logo.webp`} alt="" className="h-8 w-auto shrink-0" />
         <div className="min-w-0">
-          <p className="truncate text-sm font-semibold text-gray-900">{company?.name ?? 'Serralheria CRM'}</p>
-          <p className="truncate text-[11px] text-gray-500">Serralheria CRM</p>
+          <p className="truncate text-sm font-semibold text-gray-900">WJR Gestão</p>
+          <p className="truncate text-[11px] text-gray-500">{company?.name ?? 'Área restrita'}</p>
         </div>
       </div>
       <nav className="flex-1 space-y-0.5 overflow-y-auto p-2" aria-label="Menu principal">
@@ -78,6 +77,14 @@ export function AppLayout() {
         <button onClick={() => void logout()} className="mt-2 inline-flex items-center gap-1.5 text-[13px] text-gray-600 hover:text-gray-900">
           <LogOut className="size-3.5" /> Sair
         </button>
+        {!inst.installed && inst.canPrompt && (
+          <button onClick={() => void inst.install()} className="mt-2 flex items-center gap-1.5 text-[13px] text-brand-800 hover:text-brand-900">
+            <Download className="size-3.5" /> Instalar aplicativo
+          </button>
+        )}
+        <a href="/" target="_blank" rel="noopener" className="mt-2 flex items-center gap-1.5 text-[13px] text-gray-600 hover:text-gray-900">
+          <Globe className="size-3.5" /> Abrir o site
+        </a>
       </div>
     </div>
   );
@@ -100,7 +107,8 @@ export function AppLayout() {
         <button onClick={() => setOpen(true)} className="rounded p-1 text-gray-700" aria-label="Abrir menu">
           <Menu className="size-5" />
         </button>
-        <span className="truncate text-sm font-semibold">{company?.name}</span>
+        <img src={`${import.meta.env.BASE_URL}logo.webp`} alt="" className="h-7 w-auto" />
+        <span className="truncate text-sm font-semibold">WJR Gestão</span>
       </header>
       <main className="mx-auto max-w-[1400px] px-4 py-5 sm:px-6 lg:px-8 lg:py-7">
         <Outlet />

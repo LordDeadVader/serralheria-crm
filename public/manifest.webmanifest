@@ -1,0 +1,22 @@
+{
+  "name": "WJR Serralheria — Gestão",
+  "short_name": "WJR Gestão",
+  "description": "CRM, orçamentos, estoque e painel do site da WJR Serralheria.",
+  "id": "/crm/",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "lang": "pt-BR",
+  "background_color": "#ffffff",
+  "theme_color": "#101112",
+  "icons": [
+    { "src": "pwa-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "pwa-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "pwa-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ],
+  "shortcuts": [
+    { "name": "Novo orçamento", "url": "./#/orcamentos/novo" },
+    { "name": "Solicitações do site", "url": "./#/site/solicitacoes" }
+  ]
+}

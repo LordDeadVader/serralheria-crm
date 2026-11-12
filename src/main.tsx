@@ -18,7 +18,7 @@ const queryClient = new QueryClient({
   },
 });
 
-// HashRouter: o GitHub Pages não reescreve rotas; com hash, atualizar a página nunca gera 404.
+// HashRouter: rotas no hash — atualizar a página dentro do app nunca gera 404 no servidor.
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <QueryClientProvider client={queryClient}>
@@ -34,6 +34,19 @@ createRoot(document.getElementById('root')!).render(
 );
 
 startCardTableLabels();
+
+// App instalável: o service worker só existe na versão publicada (escopo /crm/).
+if (import.meta.env.PROD && 'serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register(`${import.meta.env.BASE_URL}sw.js`, { scope: import.meta.env.BASE_URL }).catch(() => {});
+  });
+}
+// Guarda o convite de instalação do navegador para o botão "Instalar aplicativo".
+window.addEventListener('beforeinstallprompt', (e) => {
+  e.preventDefault();
+  (window as unknown as { __installPrompt?: Event }).__installPrompt = e;
+  window.dispatchEvent(new Event('installprompt'));
+});
 
 // Depois de uma nova publicação, abas abertas antes dela ainda pedem os arquivos antigos
 // (ex.: gerador de PDF), que já não existem no servidor. Recarrega uma vez para pegar a versão nova.

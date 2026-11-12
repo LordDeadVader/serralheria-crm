@@ -1,4 +1,4 @@
-name: CI e deploy (GitHub Pages)
+name: CI e redirecionamento do endereço antigo
 
 on:
   push:
@@ -37,27 +37,16 @@ jobs:
       - name: Testes automatizados
         run: npm test
 
-      - name: Validar URL da API
-        env:
-          VITE_API_URL: ${{ vars.VITE_API_URL }}
-        run: |
-          if [ -z "$VITE_API_URL" ]; then
-            echo "::error::Variável de repositório VITE_API_URL não configurada (Settings > Secrets and variables > Actions > Variables)."
-            exit 1
-          fi
-          case "$VITE_API_URL" in https://*) ;; *) echo "::error::VITE_API_URL deve usar HTTPS"; exit 1;; esac
-
-      - name: Build de produção
-        env:
-          VITE_API_URL: ${{ vars.VITE_API_URL }}
-          VITE_BASE_PATH: /${{ github.event.repository.name }}/
+      - name: Build do CRM (publicado junto com o site pelo Worker)
         run: npm run build
 
-      - name: Publicar artefato do Pages
+      # O site, o CRM e a API são publicados no Cloudflare Worker (npm run worker:deploy).
+      # O GitHub Pages só redireciona o endereço antigo para o novo.
+      - name: Publicar redirecionamento do endereço antigo
         if: github.event_name != 'pull_request'
         uses: actions/upload-pages-artifact@v3
         with:
-          path: dist
+          path: scripts/pages-redirect
 
   deploy:
     name: Publicar no GitHub Pages

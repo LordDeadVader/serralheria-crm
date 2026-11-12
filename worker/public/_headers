@@ -1,0 +1,8 @@
+/s/*
+  Cache-Control: public, max-age=604800
+/crm/assets/*
+  Cache-Control: public, max-age=31536000, immutable
+/crm/sw.js
+  Cache-Control: no-cache
+/crm/manifest.webmanifest
+  Cache-Control: no-cache

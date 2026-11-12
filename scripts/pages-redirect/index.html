@@ -1,0 +1,18 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="robots" content="noindex" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>WJR Serralheria — novo endereço</title>
+    <script>
+      // O sistema mudou para um novo endereço. Links antigos do CRM (#/…) vão direto para o CRM.
+      var NEW = 'https://wj-serralheria.davihenriqueded.workers.dev';
+      location.replace(location.hash && location.hash.length > 2 ? NEW + '/crm/' + location.hash : NEW + '/');
+    </script>
+    <style>body{font-family:system-ui,sans-serif;background:#101112;color:#fff;display:grid;place-items:center;min-height:100vh;margin:0}a{color:#9c90ff}</style>
+  </head>
+  <body>
+    <p>Mudamos de endereço: <a href="https://wj-serralheria.davihenriqueded.workers.dev/">wj-serralheria.davihenriqueded.workers.dev</a></p>
+  </body>
+</html>

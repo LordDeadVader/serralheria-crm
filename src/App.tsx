@@ -17,6 +17,13 @@ import { ProductionPage } from './pages/ProductionPage';
 import { ReportsPage } from './pages/ReportsPage';
 import { SettingsPage } from './pages/SettingsPage';
 import { TemplatesPage } from './pages/TemplatesPage';
+import { SiteLayout } from './pages/site/SiteLayout';
+import { SiteOverviewPage } from './pages/site/SiteOverviewPage';
+import { SiteLeadsPage } from './pages/site/SiteLeadsPage';
+import { SiteProjectsPage } from './pages/site/SiteProjectsPage';
+import { SiteServicesPage } from './pages/site/SiteServicesPage';
+import { SiteContentPage } from './pages/site/SiteContentPage';
+import { SiteTestimonialsPage } from './pages/site/SiteTestimonialsPage';
 
 export function App() {
   const { status } = useAuth();
@@ -47,6 +54,14 @@ export function App() {
         <Route path="producao" element={<ProductionPage />} />
         <Route path="relatorios" element={<ReportsPage />} />
         <Route path="configuracoes" element={<SettingsPage />} />
+        <Route path="site" element={<SiteLayout />}>
+          <Route index element={<SiteOverviewPage />} />
+          <Route path="solicitacoes" element={<SiteLeadsPage />} />
+          <Route path="projetos" element={<SiteProjectsPage />} />
+          <Route path="servicos" element={<SiteServicesPage />} />
+          <Route path="conteudo" element={<SiteContentPage />} />
+          <Route path="depoimentos" element={<SiteTestimonialsPage />} />
+        </Route>
       </Route>
       <Route path="/entrar" element={<Navigate to="/" replace />} />
       <Route path="*" element={<Navigate to="/" replace />} />

@@ -2,7 +2,11 @@
  * Cliente HTTP da API. Único ponto de comunicação com o backend (HTTPS).
  * O token de sessão é opaco; o banco de dados nunca é acessado diretamente pelo navegador.
  */
-const API_URL = (import.meta.env.VITE_API_URL as string | undefined)?.replace(/\/$/, '') ?? 'http://localhost:8787';
+// Em produção o CRM é servido pelo mesmo Worker do site: a API fica sempre em /api (mesmo endereço, sem CORS).
+// No desenvolvimento (Vite em :5173), VITE_API_URL aponta para o Worker local.
+export const API_URL = import.meta.env.DEV
+  ? ((import.meta.env.VITE_API_URL as string | undefined)?.replace(/\/$/, '') ?? 'http://localhost:8787/api')
+  : '/api';
 const TOKEN_KEY = 'scrm.session';
 
 export class ApiError extends Error {
@@ -87,3 +91,29 @@ export const qs = (o: Record<string, string | number | boolean | undefined | nul
   const r = s.toString();
   return r ? `?${r}` : '';
 };
+
+/** Envia bytes (imagem já otimizada) para a API. */
+export async function upload<T>(path: string, data: Blob): Promise<T> {
+  const token = session.get();
+  let res: Response;
+  try {
+    res = await fetch(API_URL + path, {
+      method: 'POST',
+      headers: { 'Content-Type': data.type, ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+      body: data,
+    });
+  } catch {
+    throw new ApiError(0, 'Falha de conexão ao enviar a imagem.');
+  }
+  const body = (await res.json().catch(() => ({}))) as { error?: string };
+  if (!res.ok) throw new ApiError(res.status, body.error ?? `Erro ${res.status}`);
+  return body as T;
+}
+
+/** Baixa um arquivo protegido (ex.: anexo de solicitação) como Blob. */
+export async function fetchBlob(path: string): Promise<Blob> {
+  const token = session.get();
+  const res = await fetch(API_URL + path, { headers: token ? { Authorization: `Bearer ${token}` } : {} });
+  if (!res.ok) throw new ApiError(res.status, 'Não foi possível abrir o arquivo.');
+  return res.blob();
+}
